@@ -873,19 +873,20 @@ async function changeCodigo(){
 }
 
 async function compartilharRanking(ranking,pts,exatos){
-  // Carregar Inter para qualidade tipográfica máxima
   try{
-    await document.fonts.load('bold 20px Inter');
-    await document.fonts.load('600 16px Inter');
-    await document.fonts.load('400 14px Inter');
+    await document.fonts.load('900 48px Inter');
+    await document.fonts.load('800 28px Inter');
+    await document.fonts.load('700 24px Inter');
+    await document.fonts.load('600 22px Inter');
+    await document.fonts.load('500 20px Inter');
   }catch(e){}
 
-  const SCALE=4;
-  const W=600;
-  const LINHA=56;
-  const PAD=28;
-  const TOP=160;
-  const BOT=80;
+  const SCALE=3;
+  const W=640;
+  const LINHA=76;
+  const PADX=32;
+  const TOP=210;
+  const BOT=96;
   const H=TOP+ranking.length*LINHA+BOT;
 
   const canvas=document.createElement('canvas');
@@ -893,158 +894,192 @@ async function compartilharRanking(ranking,pts,exatos){
   canvas.height=H*SCALE;
   const ctx=canvas.getContext('2d');
   ctx.scale(SCALE,SCALE);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
+  ctx.textBaseline='middle';
 
-  // ── FUNDO ──
-  const bg=ctx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#8B00FF');
-  bg.addColorStop(1,'#5500AA');
-  ctx.fillStyle=bg;
+  // ═══════════ FUNDO GERAL (off-white premium) ═══════════
+  ctx.fillStyle='#F4F1F7';
   ctx.fillRect(0,0,W,H);
 
-  // brilho radial no topo
-  const gl=ctx.createRadialGradient(W/2,0,0,W/2,0,W*0.7);
-  gl.addColorStop(0,'rgba(220,140,255,0.30)');
-  gl.addColorStop(1,'transparent');
-  ctx.fillStyle=gl; ctx.fillRect(0,0,W,H);
+  // ═══════════ HEADER ROXO ═══════════
+  const headH=TOP-30;
+  const hg=ctx.createLinearGradient(0,0,W,headH);
+  hg.addColorStop(0,'#3D0066');
+  hg.addColorStop(0.55,'#6A0DAD');
+  hg.addColorStop(1,'#8E2DE2');
+  ctx.fillStyle=hg;
+  ctx.beginPath();
+  ctx.roundRect(0,0,W,headH,0);
+  ctx.fill();
 
-  // ── HEADER ──
+  // brilho radial decorativo
+  const rad=ctx.createRadialGradient(W*0.8,0,0,W*0.8,0,W*0.6);
+  rad.addColorStop(0,'rgba(255,255,255,0.18)');
+  rad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=rad;
+  ctx.fillRect(0,0,W,headH);
+
+  // tag superior
   ctx.textAlign='center';
-  ctx.fillStyle='rgba(255,255,255,0.55)';
+  ctx.fillStyle='rgba(255,255,255,0.7)';
   ctx.font='600 12px Inter, Arial';
-  ctx.fillText('B O L Ã O   C O P A   D O   M U N D O', W/2, 30);
+  ctx.fillText('B O L Ã O   C O P A   D O   M U N D O', W/2, 42);
 
+  // título grande
   ctx.fillStyle='#FFFFFF';
-  ctx.font='bold 38px Inter, Arial';
-  ctx.fillText('🏆  RANKING  2026', W/2, 76);
+  ctx.font='900 46px Inter, Arial';
+  ctx.fillText('RANKING 2026', W/2, 92);
 
+  // troféu
+  ctx.font='34px Arial';
+  ctx.fillText('🏆', W/2-185, 90);
+  ctx.fillText('🏆', W/2+185, 90);
+
+  // data pill
   const data=new Date().toLocaleDateString('pt-BR');
   const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  ctx.fillStyle='rgba(210,170,255,0.85)';
-  ctx.font='500 12px Inter, Arial';
-  ctx.fillText('Atualizado em '+data+' às '+hora, W/2, 100);
+  const pill=data+'  •  '+hora;
+  ctx.font='600 13px Inter, Arial';
+  const pillW=ctx.measureText(pill).width+32;
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.beginPath();
+  ctx.roundRect(W/2-pillW/2,128,pillW,30,15);
+  ctx.fill();
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillText(pill, W/2, 143);
 
-  // separador header
-  const sep=ctx.createLinearGradient(PAD,0,W-PAD,0);
-  sep.addColorStop(0,'transparent');
-  sep.addColorStop(0.5,'rgba(200,150,255,0.7)');
-  sep.addColorStop(1,'transparent');
-  ctx.strokeStyle=sep; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(PAD,116); ctx.lineTo(W-PAD,116); ctx.stroke();
+  // ═══════════ CARTÃO BRANCO DA LISTA ═══════════
+  const cardX=20, cardY=headH-18, cardW=W-40;
+  const cardH=H-cardY-20;
+  ctx.shadowColor='rgba(60,0,100,0.18)';
+  ctx.shadowBlur=24;
+  ctx.shadowOffsetY=8;
+  ctx.fillStyle='#FFFFFF';
+  ctx.beginPath();
+  ctx.roundRect(cardX,cardY,cardW,cardH,20);
+  ctx.fill();
+  ctx.shadowColor='transparent';
+  ctx.shadowBlur=0;
+  ctx.shadowOffsetY=0;
 
-  // ── LINHAS ──
+  // ═══════════ LINHAS ═══════════
+  const medalColors=[
+    {bg1:'#FFF8E1',bg2:'#FFFFFF',bar:'#F5B400',pts:'#B8860B',badge:'🥇'},
+    {bg1:'#F4F4F6',bg2:'#FFFFFF',bar:'#9AA0A6',pts:'#6B7177',badge:'🥈'},
+    {bg1:'#FBEFE6',bg2:'#FFFFFF',bar:'#C97B3C',pts:'#A85A28',badge:'🥉'}
+  ];
+
   ranking.forEach((p,i)=>{
     const n=getNome(p);
     const pontos=pts[n]||0;
     const ex=exatos[n]||0;
     const y=TOP+i*LINHA;
-    const cy=y+LINHA/2; // centro vertical
+    const cy=y+LINHA/2;
     const isLast=i===ranking.length-1&&ranking.length>1;
     const isPenult=i===ranking.length-2&&ranking.length>2;
     const isAntepenult=i===ranking.length-3&&ranking.length>3;
 
-    // ── fundo da linha ──
-    const rx=PAD/2, ry=y+5, rw=W-PAD, rh=LINHA-8, rr=10;
+    const rx=cardX+12, rw=cardW-24, ry=y+4, rh=LINHA-8;
 
-    // Linha base: alternado branco / transparente
-    ctx.fillStyle=i%2===0?'rgba(255,255,255,0.10)':'rgba(255,255,255,0.03)';
-    ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rr); ctx.fill();
+    // fundo da linha
+    let barColor=null, nameColor='#1A1A2E', ptsColor='#6A0DAD', badge=null;
 
-    // Sobreposição por posição especial
     if(i<3){
-      // top 3 — gradiente dourado/prata/bronze da esquerda
-      const colors=['rgba(255,215,0,0.28)','rgba(210,210,210,0.20)','rgba(210,130,40,0.25)'];
-      const borders=['#FFD700','#CCCCCC','#CD7F32'];
-      const g2=ctx.createLinearGradient(rx,0,rx+rw*0.6,0);
-      g2.addColorStop(0,colors[i]); g2.addColorStop(1,'transparent');
-      ctx.fillStyle=g2;
-      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rr); ctx.fill();
-      ctx.fillStyle=borders[i];
-      ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,3); ctx.fill();
+      const m=medalColors[i];
+      const g=ctx.createLinearGradient(rx,0,rx+rw,0);
+      g.addColorStop(0,m.bg1);
+      g.addColorStop(1,m.bg2);
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+      barColor=m.bar; ptsColor=m.pts; badge=m.badge;
     } else if(isLast){
-      // lanterna vermelho
-      ctx.fillStyle='rgba(255,60,50,0.28)';
-      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rr); ctx.fill();
-      ctx.fillStyle='#FF4040';
-      ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,3); ctx.fill();
+      ctx.fillStyle='#FDECEA';
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+      barColor='#E53935'; nameColor='#B71C1C'; ptsColor='#C62828'; badge='🔦';
     } else if(isPenult){
-      // tartaruga verde musgo suave
-      ctx.fillStyle='rgba(60,180,80,0.18)';
-      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rr); ctx.fill();
-      ctx.fillStyle='#40C060';
-      ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,3); ctx.fill();
+      ctx.fillStyle='#FFF3E0';
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+      barColor='#FB8C00'; nameColor='#E65100'; ptsColor='#EF6C00'; badge='🐢';
     } else if(isAntepenult){
-      // dormindo azul anil suave
-      ctx.fillStyle='rgba(80,120,255,0.18)';
-      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rr); ctx.fill();
-      ctx.fillStyle='#6080FF';
-      ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,3); ctx.fill();
+      ctx.fillStyle='#E8EAF6';
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+      barColor='#3949AB'; nameColor='#283593'; ptsColor='#303F9F'; badge='😴';
+    } else if(i%2===1){
+      ctx.fillStyle='#FAFAFB';
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     }
 
-    // ── MEDALHA / POSIÇÃO ──
+    // barra colorida lateral
+    if(barColor){
+      ctx.fillStyle=barColor;
+      ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,2.5); ctx.fill();
+    }
+
+    // posição / medalha
     ctx.textAlign='center';
-    if(i<3){
-      ctx.font='22px Arial';
-      ctx.fillText(['🥇','🥈','🥉'][i], PAD+18, cy+8);
+    if(badge){
+      ctx.font='30px Arial';
+      ctx.fillText(badge, rx+34, cy+1);
     } else {
-      const sym=isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':null;
-      if(sym){
-        ctx.font='20px Arial';
-        ctx.fillText(sym, PAD+18, cy+8);
-      } else {
-        ctx.fillStyle='rgba(200,170,255,0.75)';
-        ctx.font='bold 13px Inter, Arial';
-        ctx.fillText((i+1)+'°', PAD+18, cy+5);
-      }
+      ctx.fillStyle='#B0B0BC';
+      ctx.font='800 19px Inter, Arial';
+      ctx.fillText((i+1)+'º', rx+34, cy);
     }
 
-    // ── NOME ──
+    // nome
     ctx.textAlign='left';
-    const nomeX=PAD+44;
-    ctx.fillStyle=i<3?'#FFFFFF':isLast?'#FFB3AE':isPenult?'#FFD9A0':isAntepenult?'#B0BFFF':'rgba(235,215,255,0.92)';
-    ctx.font=i===0?'bold 20px Inter, Arial':i<3?'bold 18px Inter, Arial':'500 16px Inter, Arial';
-    const nomeMax=n.length>20?n.substring(0,19)+'…':n;
-    ctx.fillText(nomeMax, nomeX, cy+6);
+    ctx.fillStyle=nameColor;
+    ctx.font=i===0?'800 23px Inter, Arial':i<3?'700 21px Inter, Arial':'600 19px Inter, Arial';
+    const nameMax=n.length>20?n.substring(0,19)+'…':n;
+    ctx.fillText(nameMax, rx+64, cy);
 
-    // ── PONTOS ──
+    // pontos
     ctx.textAlign='right';
-    const ptX=W-PAD-50;
-    ctx.fillStyle=i===0?'#FFD700':i===1?'#E8E8E8':i===2?'#F0A060':'rgba(215,195,255,0.92)';
-    ctx.font=i<3?'bold 17px Inter, Arial':'600 15px Inter, Arial';
-    ctx.fillText(pontos+' pts', ptX, cy+6);
+    ctx.fillStyle=ptsColor;
+    ctx.font='800 22px Inter, Arial';
+    ctx.fillText(pontos, rx+rw-92, cy);
+    ctx.fillStyle='#9999A8';
+    ctx.font='600 12px Inter, Arial';
+    ctx.fillText('pts', rx+rw-92, cy+18);
 
-    // ── EXATOS ──
-    ctx.font='500 13px Arial';
-    ctx.fillStyle='rgba(190,150,255,0.85)';
-    ctx.fillText('🎯'+ex, W-PAD, cy+6);
+    // exatos chip
+    ctx.textAlign='right';
+    ctx.fillStyle='#7B1FA2';
+    ctx.font='600 15px Inter, Arial';
+    ctx.fillText('🎯 '+ex, rx+rw-16, cy);
+
+    // divisória
+    if(i<ranking.length-1 && i>=3 && !isLast && !isPenult && !isAntepenult){
+      ctx.strokeStyle='rgba(0,0,0,0.05)';
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(rx+64,y+LINHA);
+      ctx.lineTo(rx+rw-16,y+LINHA);
+      ctx.stroke();
+    }
   });
 
-  // ── RODAPÉ ──
-  const yBot=TOP+ranking.length*LINHA+10;
-  ctx.strokeStyle=sep; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(PAD,yBot); ctx.lineTo(W-PAD,yBot); ctx.stroke();
-
+  // ═══════════ RODAPÉ ═══════════
+  const yF=TOP+ranking.length*LINHA+8;
   ctx.textAlign='center';
-  ctx.fillStyle='rgba(200,170,255,0.6)';
+  ctx.fillStyle='#8A8A99';
+  ctx.font='600 12px Inter, Arial';
+  ctx.fillText('Desempate: placares exatos · ordem alfabética', W/2, yF+24);
+  ctx.fillStyle='#B8A0CC';
   ctx.font='500 11px Inter, Arial';
-  ctx.fillText('⚖️  Desempate: placares exatos · ordem alfabética', W/2, yBot+22);
-  ctx.fillStyle='rgba(180,140,220,0.35)';
-  ctx.font='400 10px Inter, Arial';
-  ctx.fillText('bolaodacopa2026-pereira.netlify.app', W/2, yBot+40);
+  ctx.fillText('bolao-copa-pereira.vercel.app', W/2, yF+46);
 
-  // ── COMPARTILHAR ──
+  // ═══════════ EXPORTAR ═══════════
   canvas.toBlob(async blob=>{
-    const file=new File([blob],'ranking-bolao.png',{type:'image/png'});
+    const file=new File([blob],'ranking-bolao-copa-2026.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file],title:'Ranking Bolão Copa 2026'}); return; }catch(e){}
     }
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url; a.download='ranking-bolao.png'; a.click();
+    a.href=url; a.download='ranking-bolao-copa-2026.png'; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
-    showToast('💾 Imagem salva! Envie direto no WhatsApp (não tire foto da tela!)');
-  },'image/png');
+    showToast('💾 Imagem salva! Compartilhe pelo WhatsApp');
+  },'image/png',1.0);
 }
 
 
