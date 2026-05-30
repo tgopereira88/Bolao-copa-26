@@ -547,7 +547,7 @@ let STATE = {
   partAtual:null, partMMAtual:null, partEspAtual:null,
   palpitesLocal:{}, palpitesMMLocal:{}, espLocal:{},
   novoNome:'', novoCodigo:'', novoCodigoPartic:'',
-  idioma:(localStorage.getItem('bolao_idioma')||'pt'),
+  idioma:'pt', // sempre começa em PT
   loginNome:localStorage.getItem('bolao_nome')||'', loginSenha:localStorage.getItem('bolao_senha')||'', loginErro:'', mostrarSenha:false, lembrarLogin:localStorage.getItem('bolao_lembrar')!=='0', darkMode:localStorage.getItem('bolao_dark')==='1',
   uploadTarget:null, // participante alvo do upload
 };
@@ -1564,7 +1564,7 @@ function render(){
   if(usuario.isAdmin){
     html+=`<button class="nb${aba==='ranking'?' on':''}" onclick="STATE.aba='ranking';render()">📊 Ranking</button>`;
   }
-  html+=`<button class="nb${(aba==='regras'||aba==='premios')?' on':''}" onclick="STATE.aba='regras';render()">📋 Regras e Prêmios</button>`;
+  html+=`<button class="nb${(aba==='regras'||aba==='premios')?' on':''}" onclick="STATE.aba='regras';render()">${t('📋 Regras e Prêmios','📋 Rules & Prizes')}</button>`;
   html+=`<div class="nav-spacer"></div></nav>`;
 
   html+=`<div class="wrap">`;
@@ -2183,10 +2183,10 @@ window.changeMM = (jogoId,field,val) => {
 function init(){
   // Garantir que o idioma padrão seja sempre PT
   // Remove 'en' salvo de sessões anteriores se não foi escolhido explicitamente
-  if(!localStorage.getItem('bolao_idioma_escolhido')) {
-    localStorage.setItem('bolao_idioma','pt');
-    STATE.idioma='pt';
-  }
+  // Sempre PT — idioma só muda se usuário clicar explicitamente no botão
+  STATE.idioma='pt';
+  localStorage.removeItem('bolao_idioma');
+  localStorage.removeItem('bolao_idioma_escolhido');
   render(); // mostra loading
   if(window._firebaseReady){
     carregarTudo().then(()=>setupListeners());
