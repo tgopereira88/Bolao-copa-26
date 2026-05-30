@@ -264,6 +264,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Sego
 .codigo-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
 .grupo-chip{display:inline-block;padding:4px 10px;background:var(--bg);border-radius:8px;font-size:12px;font-weight:500;color:var(--text);margin:2px;}
 select{font-family:inherit;}
+
+.lang-btn{position:fixed;top:12px;right:12px;z-index:9999;background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,255,255,0.3);color:#fff;font-weight:700;font-size:12px;
+  padding:5px 10px;border-radius:20px;cursor:pointer;letter-spacing:.5px;
+  transition:all .2s;font-family:inherit;}
+.lang-btn:hover{background:rgba(255,255,255,0.25);}
+.lang-btn.dark{background:rgba(0,0,0,0.3);border-color:rgba(255,255,255,0.2);}
 </style>
 </head>
 <body>
@@ -513,7 +521,7 @@ function calcularPontos(partics,palpites,especiais,resultados,resEsp,regras){
       const rv=rg1>rg2?1:rg1<rg2?-1:0,pv=pg1>pg2?1:pg1<pg2?-1:0;
       if(pg1===rg1&&pg2===rg2){pts[n]+=R.r_mmexato;exatos[n]++;}
       else if(rv===pv&&rv!==0)pts[n]+=R.r_mmvenc;
-      else if(rv===0&&pv===0){if(r.pen&&pp.pen&&r.pen===pp.pen)pts[n]+=R.r_mmvenc;}
+      // Empate no tempo normal: ninguém ganha ponto de vencedor (pênaltis não contam para pontuação)
     });
     const espNomes=Object.keys(especiais);
     const espMatch=espNomes.find(k=>k.toLowerCase()===nLow)||n;
@@ -1468,6 +1476,19 @@ function jogoCardHTML(jogo,valor,disabled,onChange,ptJogo){
 // ══════════════════════════════════════════════════════
 function render(){
   const root=document.getElementById('root');
+
+  // Botão PT/EN fixo no canto superior direito
+  let langBtn=document.getElementById('lang-toggle');
+  if(!langBtn){
+    langBtn=document.createElement('button');
+    langBtn.id='lang-toggle';
+    langBtn.className='lang-btn';
+    langBtn.onclick=toggleIdioma;
+    document.body.appendChild(langBtn);
+  }
+  langBtn.textContent=STATE.idioma==='pt'?'EN':'PT';
+  langBtn.className='lang-btn'+(STATE.darkMode?' dark':'');
+
   const {loading,fbReady,usuario,aba,partics,palpites,especiais,resultados,resEsp,regras,codigo,codigos,
     toast,syncing,modal,partAtual,partMMAtual,partEspAtual,
     palpitesLocal,palpitesMMLocal,espLocal,novoNome,novoCodigo,loginNome,loginSenha,loginErro}=STATE;
@@ -1550,7 +1571,6 @@ function render(){
     <div class="hdr-user">
       <span style="font-size:13px;font-weight:700">Olá, <strong>${esc(usuario.nome)}</strong></span>
       ${usuario.isAdmin?'<span class="badge-admin">⭐ ADMIN</span>':'<span class="badge-user">👤 Participante</span>'}
-      <button class="logout-btn" onclick="toggleIdioma()" style="padding:5px 10px">${STATE.idioma==='pt'?'🇺🇸':'🇧🇷'}</button>
       <button class="logout-btn" onclick="toggleDarkMode()" style="padding:5px 10px">${STATE.darkMode?'☀️':'🌙'}</button>
       <button class="logout-btn" onclick="if(!STATE.lembrarLogin){localStorage.removeItem('bolao_nome');localStorage.removeItem('bolao_senha');}STATE.usuario=null;STATE.aba='participantes';render()">${t('Sair','Exit')} 🚪</button>
     </div>
@@ -1828,7 +1848,7 @@ function render(){
       <div class="cb">
         ${bloqMMatual&&!usuario.isAdmin?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px">
           🔒 <span>${t("Mata-mata bloqueado pelo admin.","Knockout stage locked by the admin.")}</span></div>`
-          :`<div class="aviso">${t("📝 Times em cinza ainda não foram definidos.","📝 Teams in gray have not been defined yet.")}</div>`}
+          :`<div class="aviso">${t("📝 Times em cinza ainda não foram definidos. Placar do tempo normal apenas.","📝 Teams in gray are not yet defined. Regular time score only.")}</div>`}
       </div>
     </div>`;
     FASES_MM.forEach(fase=>{
@@ -1909,7 +1929,8 @@ function render(){
       });
       html+=`</div></div></div>`;
 
-      html+=`<div class="card"><div class="ct">⚔️ Resultados Reais — Mata-Mata (Admin)</div><div class="cb">`;
+      html+=`<div class="card"><div class="ct">⚔️ Resultados Reais — Mata-Mata (Admin)</div><div class="cb">
+      <div class="aviso" style="margin-bottom:12px">⚠️ Digite o placar do <strong>tempo normal</strong>. Se houver empate, selecione o classificado (prorrogação/pênaltis). A pontuação usa só o tempo normal.</div>`;
       FASES_MM.forEach(fase=>{
         html+=`<div style="font-size:12px;font-weight:700;color:#007AFF;margin:14px 0 6px">${FASES_LABEL[fase]}</div>`;
         JOGOS_MM.filter(j=>j.fase===fase).forEach(j=>{
@@ -1927,7 +1948,7 @@ function render(){
                 onchange="changeRes('${j.id}','g2',this.value)"/>
               <span class="res-time right">${nomeCurto(t2)}</span>
               <select class="pen-sel" onchange="changeRes('${j.id}','pen','',this.value)">
-                <option value="" ${!r.pen?'selected':''}>Pên?</option>
+                <option value="" ${!r.pen?'selected':''}>Classificado?</option>
                 <option value="1" ${r.pen==='1'?'selected':''}>${nomeCurto(t1)} avança</option>
                 <option value="2" ${r.pen==='2'?'selected':''}>${nomeCurto(t2)} avança</option>
               </select>
