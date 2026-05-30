@@ -547,7 +547,7 @@ let STATE = {
   partAtual:null, partMMAtual:null, partEspAtual:null,
   palpitesLocal:{}, palpitesMMLocal:{}, espLocal:{},
   novoNome:'', novoCodigo:'', novoCodigoPartic:'',
-  loginNome:localStorage.getItem('bolao_nome')||'', loginSenha:localStorage.getItem('bolao_senha')||'', loginErro:'', lembrarLogin:!!localStorage.getItem('bolao_nome'), darkMode:localStorage.getItem('bolao_dark')==='1',
+  loginNome:localStorage.getItem('bolao_nome')||'', loginSenha:localStorage.getItem('bolao_senha')||'', loginErro:'', mostrarSenha:false, lembrarLogin:localStorage.getItem('bolao_lembrar')!=='0', darkMode:localStorage.getItem('bolao_dark')==='1',
   uploadTarget:null, // participante alvo do upload
 };
 
@@ -883,10 +883,11 @@ async function compartilharRanking(ranking,pts,exatos){
 
   const SCALE=3;
   const W=640;
-  const LINHA=76;
-  const PADX=32;
-  const TOP=210;
-  const BOT=96;
+  // Altura dinâmica: quanto mais participantes, menor a linha
+  const LINHA=ranking.length<=10?72:ranking.length<=15?64:ranking.length<=20?56:ranking.length<=25?50:44;
+  const PADX=28;
+  const TOP=190;
+  const BOT=72;
   const H=TOP+ranking.length*LINHA+BOT;
 
   const canvas=document.createElement('canvas');
@@ -1440,9 +1441,16 @@ function render(){
       <input class="login-inp" id="ln" value="${esc(loginNome)}" placeholder="Digite seu nome"
         oninput="STATE.loginNome=this.value" onkeydown="if(event.key==='Enter')fazerLogin()"/>
       <label class="lbl">Código de acesso (ou senha admin):</label>
-      <input class="login-inp" type="password" id="ls" value="${esc(loginSenha)}" placeholder="Ex: T2026"
-        oninput="STATE.loginSenha=this.value" onkeydown="if(event.key==='Enter')fazerLogin()"/>
-      <div style="display:flex;align-items:center;gap:8px;margin:8px 0;text-align:left">
+      <div style="position:relative">
+        <input class="login-inp" type="${STATE.mostrarSenha?'text':'password'}" id="ls" value="${esc(loginSenha)}" placeholder="Ex: T2026"
+          oninput="STATE.loginSenha=this.value" onkeydown="if(event.key==='Enter')fazerLogin()"
+          style="padding-right:48px"/>
+        <button onclick="STATE.mostrarSenha=!STATE.mostrarSenha;render()"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2)">
+          ${STATE.mostrarSenha?'🙈':'👁️'}
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;text-align:left">
         <input type="checkbox" id="lembrar" ${STATE.lembrarLogin?'checked':''} onchange="STATE.lembrarLogin=this.checked" style="width:16px;height:16px;cursor:pointer;accent-color:#660099"/>
         <label for="lembrar" style="font-size:13px;color:var(--text2);cursor:pointer;font-weight:500">Manter conectado</label>
       </div>
