@@ -186,7 +186,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Sego
 .badj:hover{background:var(--blue-dark);}
 .badj:disabled{background:var(--text3);cursor:not-allowed;}
 
-/* GRUPO HEADER */
+/* ${t("GRUPO","GROUP")} HEADER */
 .gh{display:flex;align-items:center;gap:8px;margin:18px 0 8px;padding:10px 14px;background:var(--blue-soft);border-radius:10px;color:var(--text);}
 .gl{font-size:18px;font-weight:700;color:var(--blue);letter-spacing:-0.3px;}
 .gi{font-size:11px;font-weight:500;color:var(--text2);}
@@ -547,7 +547,7 @@ let STATE = {
   partAtual:null, partMMAtual:null, partEspAtual:null,
   palpitesLocal:{}, palpitesMMLocal:{}, espLocal:{},
   novoNome:'', novoCodigo:'', novoCodigoPartic:'',
-  idioma:localStorage.getItem('bolao_idioma')||'pt',
+  idioma:(localStorage.getItem('bolao_idioma')||'pt'),
   loginNome:localStorage.getItem('bolao_nome')||'', loginSenha:localStorage.getItem('bolao_senha')||'', loginErro:'', mostrarSenha:false, lembrarLogin:localStorage.getItem('bolao_lembrar')!=='0', darkMode:localStorage.getItem('bolao_dark')==='1',
   uploadTarget:null, // participante alvo do upload
 };
@@ -701,7 +701,7 @@ async function toggleBloqueio(nomePartic, campo){
 
 function gerarGraficoSVG(dados, width, height){
   // dados = [{label, valor}]
-  if(!dados||dados.length<2) return '<div style="text-align:center;color:#aaa;padding:20px;font-size:13px">Ainda sem dados suficientes para o gráfico.<br>O histórico é gerado conforme resultados são inseridos.</div>';
+  if(!dados||dados.length<2) return '<div style="text-align:center;color:#aaa;padding:20px;font-size:13px">Ainda sem dados suficientes para o gráfico.<br>${t("O histórico é gerado conforme resultados são inseridos.","History is generated as results are entered.")}</div>';
   const maxVal=Math.max(...dados.map(d=>d.valor),1);
   const padL=8,padR=8,padT=16,padB=28;
   const w=width||320, h=height||140;
@@ -780,6 +780,7 @@ function calcularHistorico(nome, palpites, resultados, resEsp, especiais, regras
 function toggleIdioma(){
   STATE.idioma=STATE.idioma==='pt'?'en':'pt';
   localStorage.setItem('bolao_idioma',STATE.idioma);
+  localStorage.setItem('bolao_idioma_escolhido','1');
   render();
 }
 
@@ -937,8 +938,8 @@ function verRankingHTML(ranking,pts,exatos){
   </style></head><body>
   <div class="header">
     <button class="close-btn" onclick="window.close()">✕</button>
-    <div class="tag">B O L Ã O   C O P A   D O   M U N D O</div>
-    <div class="title">🏆 RANKING 2026 🏆</div>
+    <div class="tag">${t("B O L Ã O   C O P A   D O   M U N D O","W O R L D   C U P   P O O L")}</div>
+    <div class="title">🏆 ${t("RANKING 2026","RANKING 2026")} 🏆</div>
     <div class="subtitle">${data} • ${hora}</div>
   </div>
   <div style="height:16px"></div>
@@ -1202,9 +1203,9 @@ function exportarRegras(){
   [
     {id:'r_exato',icon:'🎯',tit:'${t("Placar Exato","Exact Score")} (Grupos)',sub:'${t("Acertou o placar certinho (ex: 2×1)","Predicted the exact score (e.g. 2×1)")}'},
     {id:'r_venc',icon:'✅',tit:'${t("Vencedor / Empate","Winner / Draw")} (Grupos)',sub:'${t("Acertou quem ganhou ou que empatou","Predicted the winner or draw")}'},
-    {id:'r_camp',icon:'🏆',tit:'Campeão',sub:'${t("Acertou a seleção campeã do mundo","Predicted the world champion")}'},
-    {id:'r_vice',icon:'🥈',tit:'Vice-Campeão',sub:'${t("Acertou a seleção vice-campeã","Predicted the runner-up")}'},
-    {id:'r_art',icon:'🥇',tit:'Artilheiro',sub:'${t("Acertou o artilheiro da Copa","Predicted the top scorer")}'},
+    {id:'r_camp',icon:'🏆',tit:'${t("Campeão","Champion")}',sub:'${t("Acertou a seleção campeã do mundo","Predicted the world champion")}'},
+    {id:'r_vice',icon:'🥈',tit:'${t("Vice-Campeão","Runner-Up")}',sub:'${t("Acertou a seleção vice-campeã","Predicted the runner-up")}'},
+    {id:'r_art',icon:'🥇',tit:'${t("Artilheiro","Top Scorer")}',sub:'${t("Acertou o artilheiro da Copa","Predicted the top scorer")}'},
     {id:'r_mmexato',icon:'⚔️',tit:'${t("Placar Exato (Mata-Mata)","Exact Score (Knockout)")}',sub:'${t("Placar exato em jogo eliminatório","Exact score in knockout match")}'},
     {id:'r_mmvenc',icon:'⚔️',tit:'${t("Vencedor (Mata-Mata)","Winner (Knockout)")}',sub:'${t("Acertou o classificado, mas não o placar","Predicted the winner but not the score")}'},
   ].forEach(r=>{
@@ -1512,7 +1513,7 @@ function render(){
     html+=`<div class="login-wrap"><div class="login-box">
       <span class="login-bola">⚽</span>
       <div class="login-tit">BOLÃO COPA 2026</div>
-      <div class="login-sub">🇺🇸 🇲🇽 🇨🇦 · ${t("48 seleções · 104 jogos","48 teams · 104 games")}</div>
+      <div class="login-sub">🇧🇷 · ${t("48 seleções · 104 jogos","48 teams · 104 games")}</div>
       <label class="lbl">Seu nome no bolão:</label>
       <input class="login-inp" id="ln" value="${esc(loginNome)}" placeholder="${t('Digite seu nome','Enter your name')}"
         oninput="STATE.loginNome=this.value" onkeydown="if(event.key==='Enter')fazerLogin()"/>
@@ -1545,7 +1546,7 @@ function render(){
   html+=`<header class="hdr"><div class="hdr-inner">
     <div style="font-size:40px;margin-bottom:2px">⚽</div>
     <h1>BOLÃO COPA 2026</h1>
-    <div class="hdr-sub">🇺🇸 🇲🇽 🇨🇦 · ${t("48 seleções · 104 jogos · 11 jun – 19 jul","48 teams · 104 games · Jun 11 – Jul 19")}</div>
+    <div class="hdr-sub">🇧🇷 · ${t("48 seleções · 104 jogos · 11 jun – 19 jul","48 teams · 104 games · Jun 11 – Jul 19")}</div>
     <div class="hdr-user">
       <span style="font-size:13px;font-weight:700">Olá, <strong>${esc(usuario.nome)}</strong></span>
       ${usuario.isAdmin?'<span class="badge-admin">⭐ ADMIN</span>':'<span class="badge-user">👤 Participante</span>'}
@@ -1694,11 +1695,11 @@ function render(){
         </div>
       </div>`;
     }
-    html+=`<div class="card"><div class="ct">⚽ Palpites de ${esc(partAtual)}</div><div class="cb">
+    html+=`<div class="card"><div class="ct">${t("⚽ Palpites de","⚽ Predictions for")} ${esc(partAtual)}</div><div class="cb">
       ${bloq?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px">
         🔒 <span>${t("Seus palpites estão bloqueados pelo admin. Você pode acompanhar seus palpites abaixo.","Your predictions are locked by the admin. You can still view them below.")}</span>
       </div>`:`<div class="aviso">${t("📝 Use + e − ou clique no número para digitar o placar.","📝 Use + and − or tap the number to enter the score.")}</div>`}
-      ${bloq&&usuario.isAdmin?`<div class="aviso-lock" style="margin-top:8px">⚠️ Admin editando palpite BLOQUEADO</div>`:''}
+      ${bloq&&usuario.isAdmin?`<div class="aviso-lock" style="margin-top:8px">${t("⚠️ Admin editando palpite BLOQUEADO","⚠️ Admin editing LOCKED prediction")}</div>`:''}
       ${mostrarImagem?`<div class="aviso" style="background:#fff3e0;border-color:#f57c00;margin-top:8px">📸 Você está digitando os palpites vendo a imagem acima. Lembre-se de salvar ao final!</div>`:''}
     </div></div>`;
     GRUPOS.forEach(g=>{
@@ -1721,7 +1722,7 @@ function render(){
     }
     // Histórico de pontos
     const histDados=calcularHistorico(partAtual,palpites,resultados,resEsp,especiais,regras);
-    html+=`<div class="card"><div class="ct">📈 Evolução de Pontos</div><div class="cb" style="padding:8px 0">
+    html+=`<div class="card"><div class="ct">${t("📈 Evolução de Pontos","📈 Points Evolution")}</div><div class="cb" style="padding:8px 0">
       ${gerarGraficoSVG(histDados,340,150)}
     </div></div>`;
     html+=`<div style="display:flex;gap:8px;margin-top:6px">
@@ -1760,7 +1761,7 @@ function render(){
   if(aba==='campeao'&&partEspAtual){
     const pEspObj=findPartic(partEspAtual),bloqEsp=pEspObj&&isBloqueado(pEspObj);
     const disEsp=(bloqEsp&&!usuario.isAdmin)?'disabled':'';
-    html+=`<div class="card"><div class="ct">🏆 Palpites Especiais de ${esc(partEspAtual)}</div><div class="cb">
+    html+=`<div class="card"><div class="ct">${t("🏆 Palpites Especiais de","🏆 Special Predictions for")} ${esc(partEspAtual)}</div><div class="cb">
       ${bloqEsp?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px;margin-bottom:10px">
         🔒 <span>Seus palpites estão bloqueados pelo admin.</span>
       </div>`:''}
@@ -1823,7 +1824,7 @@ function render(){
   }
   if(aba==='matamat'&&partMMAtual){
     const pMMObj=findPartic(partMMAtual),bloqMMatual=pMMObj&&isBloqMM(pMMObj);
-    html+=`<div class="card"><div class="ct">⚔️ Mata-Mata de ${esc(partMMAtual)}</div>
+    html+=`<div class="card"><div class="ct">${t("⚔️ Mata-Mata de","⚔️ Knockout Stage for")} ${esc(partMMAtual)}</div>
       <div class="cb">
         ${bloqMMatual&&!usuario.isAdmin?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px">
           🔒 <span>${t("Mata-mata bloqueado pelo admin.","Knockout stage locked by the admin.")}</span></div>`
@@ -1996,7 +1997,7 @@ function render(){
     }
     
     // Botão de imprimir (pra todos)
-    html+=`<button class="btn2" onclick="exportarRegras()">🖨️ Imprimir Regras</button>`;
+    html+=`<button class="btn2" onclick="exportarRegras()">${t("🖨️ Imprimir Regras","🖨️ Print Rules")}</button>`;
     
     // Exportar dados (pra todos)
     html+=`<div class="card"><div class="ct">${t("📥 Exportar Dados","📥 Export Data")}</div><div class="cb">
@@ -2180,6 +2181,12 @@ window.changeMM = (jogoId,field,val) => {
 // INIT
 // ══════════════════════════════════════════════════════
 function init(){
+  // Garantir que o idioma padrão seja sempre PT
+  // Remove 'en' salvo de sessões anteriores se não foi escolhido explicitamente
+  if(!localStorage.getItem('bolao_idioma_escolhido')) {
+    localStorage.setItem('bolao_idioma','pt');
+    STATE.idioma='pt';
+  }
   render(); // mostra loading
   if(window._firebaseReady){
     carregarTudo().then(()=>setupListeners());
