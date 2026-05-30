@@ -872,23 +872,101 @@ async function changeCodigo(){
   showToast('🔑 Código alterado para '+novo);
 }
 
+function verRankingHTML(ranking,pts,exatos){
+  const data=new Date().toLocaleDateString('pt-BR');
+  const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const medals=['🥇','🥈','🥉'];
+  const N=ranking.length;
+
+  let rows='';
+  ranking.forEach((p,i)=>{
+    const n=getNome(p);
+    const pontos=pts[n]||0;
+    const ex=exatos[n]||0;
+    const isLast=i===N-1&&N>1;
+    const isPenult=i===N-2&&N>2;
+    const isAntepenult=i===N-3&&N>3;
+
+    const sym=i===0?'🥇':i===1?'🥈':i===2?'🥉':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1)+'º';
+
+    let bg='transparent', border='transparent', nameC='#1A1A2E', ptC='#660099';
+    if(i===0){bg='#FFF8DC';border='#F5B400';nameC='#7A5C00';ptC='#B8860B';}
+    else if(i===1){bg='#F4F4F4';border='#9AA0A6';nameC='#4A4A55';ptC='#5A6472';}
+    else if(i===2){bg='#FFF0E0';border='#C87941';nameC='#7A3A10';ptC='#A0521A';}
+    else if(isLast){bg='#FDECEA';border='#E53935';nameC='#B71C1C';ptC='#C62828';}
+    else if(isPenult){bg='#F1F8E9';border='#7CB342';nameC='#33691E';ptC='#558B2F';}
+    else if(isAntepenult){bg='#E8EAF6';border='#3949AB';nameC='#1A237E';ptC='#283593';}
+    else if(i%2===0){bg='#F7F5FA';}
+
+    rows+=`<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:${bg};border-left:5px solid ${border};border-radius:12px;margin-bottom:6px">
+      <div style="font-size:26px;width:36px;text-align:center;flex-shrink:0">${typeof sym==='string'&&sym.length>2?sym:sym}</div>
+      <div style="flex:1;font-size:18px;font-weight:${i<3?'800':'600'};color:${nameC};font-family:Inter,-apple-system,sans-serif">${esc(n)}</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:22px;font-weight:800;color:${ptC};font-family:Inter,-apple-system,sans-serif;line-height:1">${pontos}</div>
+        <div style="font-size:10px;color:#999;font-weight:500">pts</div>
+      </div>
+      <div style="font-size:15px;color:#8833AA;font-weight:600;flex-shrink:0;min-width:44px;text-align:right">🎯${ex}</div>
+    </div>`;
+  });
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,-apple-system,sans-serif;background:#F0EBF7;min-height:100vh}
+    .header{background:linear-gradient(135deg,#2D004F,#660099,#9B30D9);padding:32px 20px 48px;text-align:center;position:relative}
+    .header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:32px;background:#F0EBF7;border-radius:32px 32px 0 0}
+    .tag{color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;letter-spacing:3px;margin-bottom:8px}
+    .title{color:#fff;font-size:36px;font-weight:900;margin-bottom:4px}
+    .subtitle{color:rgba(255,255,255,0.55);font-size:12px}
+    .card{background:#fff;border-radius:20px;padding:16px;margin:0 12px;box-shadow:0 8px 32px rgba(80,0,160,0.12)}
+    .footer{text-align:center;padding:20px;color:#9999AA;font-size:11px}
+    .close-btn{position:fixed;top:16px;right:16px;background:rgba(255,255,255,0.25);border:none;color:#fff;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+  </style></head><body>
+  <div class="header">
+    <button class="close-btn" onclick="window.close()">✕</button>
+    <div class="tag">B O L Ã O   C O P A   D O   M U N D O</div>
+    <div class="title">🏆 RANKING 2026 🏆</div>
+    <div class="subtitle">${data} • ${hora}</div>
+  </div>
+  <div style="height:16px"></div>
+  <div class="card">${rows}</div>
+  <div class="footer">⚖️ Desempate: placares exatos · ordem alfabética<br><span style="color:#C0A8D8">bolao-copa-pereira.vercel.app</span></div>
+  </body></html>`;
+
+  // Abre overlay interno
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#F0EBF7;overflow-y:auto;';
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='width:100%;height:100%;border:none;';
+  iframe.srcdoc=html;
+  overlay.appendChild(iframe);
+  document.body.appendChild(overlay);
+
+  // Fecha ao clicar no X dentro do iframe
+  iframe.onload=()=>{
+    try{
+      iframe.contentDocument.querySelector('.close-btn').onclick=()=>document.body.removeChild(overlay);
+    }catch(e){}
+  };
+}
+
 async function compartilharRanking(ranking,pts,exatos){
   try{
     await document.fonts.load('900 48px Inter');
-    await document.fonts.load('800 28px Inter');
-    await document.fonts.load('700 24px Inter');
-    await document.fonts.load('600 22px Inter');
-    await document.fonts.load('500 20px Inter');
+    await document.fonts.load('700 22px Inter');
+    await document.fonts.load('600 18px Inter');
   }catch(e){}
 
   const SCALE=3;
-  const W=640;
-  // Altura dinâmica: quanto mais participantes, menor a linha
-  const LINHA=ranking.length<=10?72:ranking.length<=15?64:ranking.length<=20?56:ranking.length<=25?50:44;
+  const W=680;
+  const N=ranking.length;
+  const LINHA=N<=12?80:N<=16?70:N<=20?62:N<=25?56:50;
   const PADX=28;
-  const TOP=190;
-  const BOT=72;
-  const H=TOP+ranking.length*LINHA+BOT;
+  const TOP=170;
+  const BOT=56;
+  const H=TOP+N*LINHA+BOT;
 
   const canvas=document.createElement('canvas');
   canvas.width=W*SCALE;
@@ -897,179 +975,162 @@ async function compartilharRanking(ranking,pts,exatos){
   ctx.scale(SCALE,SCALE);
   ctx.textBaseline='middle';
 
-  // ═══════════ FUNDO GERAL (off-white premium) ═══════════
-  ctx.fillStyle='#F4F1F7';
-  ctx.fillRect(0,0,W,H);
-
-  // ═══════════ HEADER ROXO ═══════════
-  const headH=TOP-30;
-  const hg=ctx.createLinearGradient(0,0,W,headH);
-  hg.addColorStop(0,'#3D0066');
-  hg.addColorStop(0.55,'#6A0DAD');
-  hg.addColorStop(1,'#8E2DE2');
+  // ── HEADER ──
+  const hg=ctx.createLinearGradient(0,0,W,TOP);
+  hg.addColorStop(0,'#2D004F');
+  hg.addColorStop(0.5,'#660099');
+  hg.addColorStop(1,'#9B30D9');
   ctx.fillStyle=hg;
-  ctx.beginPath();
-  ctx.roundRect(0,0,W,headH,0);
-  ctx.fill();
+  ctx.fillRect(0,0,W,TOP);
 
-  // brilho radial decorativo
-  const rad=ctx.createRadialGradient(W*0.8,0,0,W*0.8,0,W*0.6);
-  rad.addColorStop(0,'rgba(255,255,255,0.18)');
+  // brilho
+  const rad=ctx.createRadialGradient(W*0.75,0,0,W*0.75,0,W*0.55);
+  rad.addColorStop(0,'rgba(255,255,255,0.14)');
   rad.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=rad;
-  ctx.fillRect(0,0,W,headH);
+  ctx.fillStyle=rad; ctx.fillRect(0,0,W,TOP);
 
-  // tag superior
+  // texto header
   ctx.textAlign='center';
-  ctx.fillStyle='rgba(255,255,255,0.7)';
-  ctx.font='600 12px Inter, Arial';
-  ctx.fillText('B O L Ã O   C O P A   D O   M U N D O', W/2, 42);
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.font='600 12px Inter,Arial';
+  ctx.fillText('B O L Ã O   C O P A   D O   M U N D O', W/2, 34);
 
-  // título grande
   ctx.fillStyle='#FFFFFF';
-  ctx.font='900 46px Inter, Arial';
-  ctx.fillText('RANKING 2026', W/2, 92);
+  ctx.font='900 50px Inter,Arial';
+  ctx.fillText('RANKING 2026', W/2, 90);
 
-  // troféu
-  ctx.font='34px Arial';
-  ctx.fillText('🏆', W/2-185, 90);
-  ctx.fillText('🏆', W/2+185, 90);
+  ctx.font='36px Arial';
+  ctx.fillText('🏆', W/2-210, 88);
+  ctx.fillText('🏆', W/2+210, 88);
 
-  // data pill
-  const data=new Date().toLocaleDateString('pt-BR');
-  const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const pill=data+'  •  '+hora;
-  ctx.font='600 13px Inter, Arial';
-  const pillW=ctx.measureText(pill).width+32;
-  ctx.fillStyle='rgba(255,255,255,0.18)';
-  ctx.beginPath();
-  ctx.roundRect(W/2-pillW/2,128,pillW,30,15);
-  ctx.fill();
+  // data no canto inferior do header, discreta
+  const data=new Date().toLocaleDateString('pt-BR')+' • '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  ctx.font='500 11px Inter,Arial';
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.fillText(data, W/2, 140);
+
+  // ── CARTÃO BRANCO ──
+  const cardX=16,cardY=TOP-22,cardW=W-32,cardH=H-cardY-12;
+  ctx.shadowColor='rgba(40,0,80,0.22)';
+  ctx.shadowBlur=28;
+  ctx.shadowOffsetY=6;
   ctx.fillStyle='#FFFFFF';
-  ctx.fillText(pill, W/2, 143);
+  ctx.beginPath(); ctx.roundRect(cardX,cardY,cardW,cardH,18); ctx.fill();
+  ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.shadowOffsetY=0;
 
-  // ═══════════ CARTÃO BRANCO DA LISTA ═══════════
-  const cardX=20, cardY=headH-18, cardW=W-40;
-  const cardH=H-cardY-20;
-  ctx.shadowColor='rgba(60,0,100,0.18)';
-  ctx.shadowBlur=24;
-  ctx.shadowOffsetY=8;
-  ctx.fillStyle='#FFFFFF';
-  ctx.beginPath();
-  ctx.roundRect(cardX,cardY,cardW,cardH,20);
-  ctx.fill();
-  ctx.shadowColor='transparent';
-  ctx.shadowBlur=0;
-  ctx.shadowOffsetY=0;
-
-  // ═══════════ LINHAS ═══════════
-  const medalColors=[
-    {bg1:'#FFF8E1',bg2:'#FFFFFF',bar:'#F5B400',pts:'#B8860B',badge:'🥇'},
-    {bg1:'#F4F4F6',bg2:'#FFFFFF',bar:'#9AA0A6',pts:'#6B7177',badge:'🥈'},
-    {bg1:'#FBEFE6',bg2:'#FFFFFF',bar:'#C97B3C',pts:'#A85A28',badge:'🥉'}
-  ];
-
+  // ── LINHAS ──
   ranking.forEach((p,i)=>{
     const n=getNome(p);
     const pontos=pts[n]||0;
     const ex=exatos[n]||0;
     const y=TOP+i*LINHA;
     const cy=y+LINHA/2;
-    const isLast=i===ranking.length-1&&ranking.length>1;
-    const isPenult=i===ranking.length-2&&ranking.length>2;
-    const isAntepenult=i===ranking.length-3&&ranking.length>3;
+    const isLast=i===N-1&&N>1;
+    const isPenult=i===N-2&&N>2;
+    const isAntepenult=i===N-3&&N>3;
 
-    const rx=cardX+12, rw=cardW-24, ry=y+4, rh=LINHA-8;
+    const rx=cardX+10, ry=y+3, rw=cardW-20, rh=LINHA-6;
 
-    // fundo da linha
-    let barColor=null, nameColor='#1A1A2E', ptsColor='#6A0DAD', badge=null;
-
-    if(i<3){
-      const m=medalColors[i];
-      const g=ctx.createLinearGradient(rx,0,rx+rw,0);
-      g.addColorStop(0,m.bg1);
-      g.addColorStop(1,m.bg2);
+    // ── FUNDO ──
+    if(i===0){
+      // Ouro — gradiente dourado vibrante
+      const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
+      g.addColorStop(0,'#FFF3C4'); g.addColorStop(1,'#FFFDF7');
       ctx.fillStyle=g;
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
-      barColor=m.bar; ptsColor=m.pts; badge=m.badge;
+    } else if(i===1){
+      // Prata
+      const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
+      g.addColorStop(0,'#EAEAEA'); g.addColorStop(1,'#F8F8F8');
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+    } else if(i===2){
+      // Bronze
+      const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
+      g.addColorStop(0,'#FFE8CC'); g.addColorStop(1,'#FFF7EF');
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(isLast){
+      // Lanterna
       ctx.fillStyle='#FDECEA';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
-      barColor='#E53935'; nameColor='#B71C1C'; ptsColor='#C62828'; badge='🔦';
     } else if(isPenult){
-      ctx.fillStyle='#FFF3E0';
+      // Tartaruga
+      ctx.fillStyle='#F1F8E9';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
-      barColor='#FB8C00'; nameColor='#E65100'; ptsColor='#EF6C00'; badge='🐢';
     } else if(isAntepenult){
+      // Dormindo
       ctx.fillStyle='#E8EAF6';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
-      barColor='#3949AB'; nameColor='#283593'; ptsColor='#303F9F'; badge='😴';
-    } else if(i%2===1){
-      ctx.fillStyle='#FAFAFB';
+    } else if(i%2===0){
+      ctx.fillStyle='#F7F5FA';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     }
 
-    // barra colorida lateral
-    if(barColor){
-      ctx.fillStyle=barColor;
+    // ── BARRA LATERAL ──
+    const barColors={
+      0:'#F5B400', 1:'#8C9BA5', 2:'#C87941',
+      last:'#E53935', penult:'#7CB342', antepenult:'#3949AB'
+    };
+    let barC=i===0?barColors[0]:i===1?barColors[1]:i===2?barColors[2]
+      :isLast?barColors.last:isPenult?barColors.penult:isAntepenult?barColors.antepenult:null;
+    if(barC){
+      ctx.fillStyle=barC;
       ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,2.5); ctx.fill();
     }
 
-    // posição / medalha
+    // ── MEDALHA / POSIÇÃO ──
     ctx.textAlign='center';
-    if(badge){
-      ctx.font='30px Arial';
-      ctx.fillText(badge, rx+34, cy+1);
+    const medals=['🥇','🥈','🥉'];
+    const specials={last:'🔦',penult:'🐢',antepenult:'😴'};
+    const sym=i<3?medals[i]:isLast?specials.last:isPenult?specials.penult:isAntepenult?specials.antepenult:null;
+    if(sym){
+      ctx.font=(LINHA>60?'32':'26')+'px Arial';
+      ctx.fillText(sym, rx+34, cy+1);
     } else {
-      ctx.fillStyle='#B0B0BC';
-      ctx.font='800 19px Inter, Arial';
+      ctx.fillStyle='#B0B0C0';
+      ctx.font='700 '+(LINHA>60?'18':'15')+'px Inter,Arial';
       ctx.fillText((i+1)+'º', rx+34, cy);
     }
 
-    // nome
+    // ── NOME ──
     ctx.textAlign='left';
-    ctx.fillStyle=nameColor;
-    ctx.font=i===0?'800 23px Inter, Arial':i<3?'700 21px Inter, Arial':'600 19px Inter, Arial';
-    const nameMax=n.length>20?n.substring(0,19)+'…':n;
+    const nameColors={
+      0:'#7A5C00',1:'#4A4A55',2:'#7A3A10',
+      last:'#B71C1C',penult:'#33691E',antepenult:'#1A237E',def:'#1A1A2E'
+    };
+    ctx.fillStyle=i===0?nameColors[0]:i===1?nameColors[1]:i===2?nameColors[2]
+      :isLast?nameColors.last:isPenult?nameColors.penult:isAntepenult?nameColors.antepenult:nameColors.def;
+    const fs=LINHA>70?24:LINHA>60?21:LINHA>50?19:17;
+    ctx.font=(i<3?'800':'600')+' '+fs+'px Inter,Arial';
+    const nameMax=n.length>22?n.substring(0,21)+'…':n;
     ctx.fillText(nameMax, rx+64, cy);
 
-    // pontos
+    // ── PONTOS ──
     ctx.textAlign='right';
-    ctx.fillStyle=ptsColor;
-    ctx.font='800 22px Inter, Arial';
-    ctx.fillText(pontos, rx+rw-92, cy);
-    ctx.fillStyle='#9999A8';
-    ctx.font='600 12px Inter, Arial';
-    ctx.fillText('pts', rx+rw-92, cy+18);
+    const ptC=i===0?'#C8960A':i===1?'#5A6472':i===2?'#A0521A'
+      :isLast?'#C62828':isPenult?'#558B2F':isAntepenult?'#283593':'#5C0099';
+    ctx.fillStyle=ptC;
+    ctx.font='800 '+(LINHA>60?22:19)+'px Inter,Arial';
+    ctx.fillText(pontos, rx+rw-88, cy-5);
+    ctx.fillStyle='#AAAABC';
+    ctx.font='500 10px Inter,Arial';
+    ctx.fillText('pts', rx+rw-88, cy+12);
 
-    // exatos chip
-    ctx.textAlign='right';
-    ctx.fillStyle='#7B1FA2';
-    ctx.font='600 15px Inter, Arial';
-    ctx.fillText('🎯 '+ex, rx+rw-16, cy);
-
-    // divisória
-    if(i<ranking.length-1 && i>=3 && !isLast && !isPenult && !isAntepenult){
-      ctx.strokeStyle='rgba(0,0,0,0.05)';
-      ctx.lineWidth=1;
-      ctx.beginPath();
-      ctx.moveTo(rx+64,y+LINHA);
-      ctx.lineTo(rx+rw-16,y+LINHA);
-      ctx.stroke();
-    }
+    // ── EXATOS ──
+    ctx.fillStyle='#8833AA';
+    ctx.font='600 '+(LINHA>60?15:13)+'px Inter,Arial';
+    ctx.fillText('🎯 '+ex, rx+rw-14, cy);
   });
 
-  // ═══════════ RODAPÉ ═══════════
-  const yF=TOP+ranking.length*LINHA+8;
+  // ── RODAPÉ ──
+  const yF=TOP+N*LINHA+8;
   ctx.textAlign='center';
-  ctx.fillStyle='#8A8A99';
-  ctx.font='600 12px Inter, Arial';
-  ctx.fillText('Desempate: placares exatos · ordem alfabética', W/2, yF+24);
-  ctx.fillStyle='#B8A0CC';
-  ctx.font='500 11px Inter, Arial';
-  ctx.fillText('bolao-copa-pereira.vercel.app', W/2, yF+46);
+  ctx.fillStyle='#9999AA';
+  ctx.font='500 11px Inter,Arial';
+  ctx.fillText('⚖️ Desempate: placares exatos · ordem alfabética', W/2, yF+22);
 
-  // ═══════════ EXPORTAR ═══════════
+  // ── EXPORTAR ──
   canvas.toBlob(async blob=>{
     const file=new File([blob],'ranking-bolao-copa-2026.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
@@ -1360,11 +1421,15 @@ function jogoCardHTML(jogo,valor,disabled,onChange,ptJogo){
   const tbd=!jogo.t1||!jogo.t2;
   const dis=(disabled||tbd)?'disabled':'';
   const op=tbd?'style="opacity:.5"':'';
+  const vazio=!tbd&&!disabled&&(g1===''||g2==='');
   const ptColor=ptJogo===undefined||ptJogo===''?'#aaa':ptJogo==='0'?'#FF3B30':'#34C759';
   const ptBadge=ptJogo!==undefined&&ptJogo!==''
     ?`<div style="text-align:center;padding:2px 0 8px;font-size:12px;font-weight:700;color:${ptColor}">${ptJogo==='0'?'Sem pts':ptJogo+' pts'}</div>`
     :'';
-  return `<div class="jcard">
+  const vazioStyle=vazio?'border:2px solid #FF9500;box-shadow:0 0 0 3px rgba(255,149,0,0.15)':'';
+  const vazioTag=vazio?`<div style="background:#FF9500;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;text-align:center;letter-spacing:.5px">⚠️ PALPITE PENDENTE</div>`:'';
+  return `<div class="jcard" style="${vazioStyle}">
+    ${vazioTag}
     <div class="jtopo"><span>${jogo.data||''}</span></div>
     <div class="jcorpo" ${op}>
       <div class="tnome${tbd?' tbd':''}">${jogo.t1||'A definir'}</div>
@@ -1787,10 +1852,14 @@ function render(){
 
     if(ranking.length>0){
       html+=`<div class="card"><div class="ct">📲 Compartilhar Ranking</div><div class="cb">
-        <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:10px">Envie o ranking atualizado para um grupo do WhatsApp!</p>
-        <button class="btn-whatsapp" onclick="compartilharRanking(ranking_,pts_,exatos_)">
-          <span style="font-size:20px">💬</span> Enviar para WhatsApp
+        <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:12px">Escolha como compartilhar o ranking:</p>
+        <button class="btn-whatsapp" onclick="compartilharRanking(ranking_,pts_,exatos_)" style="margin-bottom:10px">
+          <span style="font-size:20px">🖼️</span> Gerar Imagem (PNG)
         </button>
+        <button class="btn-whatsapp" onclick="verRankingHTML(ranking_,pts_,exatos_)" style="background:linear-gradient(135deg,#660099,#9B30D9)">
+          <span style="font-size:20px">✨</span> Ver Ranking Completo
+        </button>
+        <p style="font-size:11px;color:#999;margin-top:8px;text-align:center">💡 "Ver Ranking" abre tela cheia — tire screenshot ou use o compartilhar do Safari para qualidade máxima</p>
       </div></div>`;
       // Expõe para o onclick
       window.ranking_=ranking; window.pts_=pts; window.exatos_=exatos;
