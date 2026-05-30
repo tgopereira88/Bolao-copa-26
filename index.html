@@ -547,6 +547,7 @@ let STATE = {
   partAtual:null, partMMAtual:null, partEspAtual:null,
   palpitesLocal:{}, palpitesMMLocal:{}, espLocal:{},
   novoNome:'', novoCodigo:'', novoCodigoPartic:'',
+  idioma:localStorage.getItem('bolao_idioma')||'pt',
   loginNome:localStorage.getItem('bolao_nome')||'', loginSenha:localStorage.getItem('bolao_senha')||'', loginErro:'', mostrarSenha:false, lembrarLogin:localStorage.getItem('bolao_lembrar')!=='0', darkMode:localStorage.getItem('bolao_dark')==='1',
   uploadTarget:null, // participante alvo do upload
 };
@@ -774,6 +775,16 @@ function calcularHistorico(nome, palpites, resultados, resEsp, especiais, regras
     if(dados.length>0) dados.push({label:'Esp', valor:total});
   }
   return dados;
+}
+
+function toggleIdioma(){
+  STATE.idioma=STATE.idioma==='pt'?'en':'pt';
+  localStorage.setItem('bolao_idioma',STATE.idioma);
+  render();
+}
+
+function t(ptTxt,enTxt){
+  return STATE.idioma==='en'?enTxt:ptTxt;
 }
 
 function toggleDarkMode(){
@@ -1275,7 +1286,7 @@ function exportarGrupos(nome){
 function exportarMataM(nome){
   var palMMBase=STATE.palpites[nome+'_mm']||{};
   var esp=STATE.especiais[nome]||{};
-  var html=gerarCabecalho(nome,'⚔️ Mata-Mata');
+  var html=gerarCabecalho(nome,t('⚔️ Mata-Mata','⚔️ Knockout'));
   // Mata-mata em 2 colunas
   html+='<div class="col2">';
   FASES_MM.forEach(function(fase){
@@ -1424,7 +1435,7 @@ function jogoCardHTML(jogo,valor,disabled,onChange,ptJogo){
   const vazio=!tbd&&!disabled&&(g1===''||g2==='');
   const ptColor=ptJogo===undefined||ptJogo===''?'#aaa':ptJogo==='0'?'#FF3B30':'#34C759';
   const ptBadge=ptJogo!==undefined&&ptJogo!==''
-    ?`<div style="text-align:center;padding:2px 0 8px;font-size:12px;font-weight:700;color:${ptColor}">${ptJogo==='0'?'Sem pts':ptJogo+' pts'}</div>`
+    ?`<div style="text-align:center;padding:2px 0 8px;font-size:12px;font-weight:700;color:${ptColor}">${ptJogo==='0'?t('Sem pts','No pts'):ptJogo+' pts'}</div>`
     :'';
   const vazioStyle=vazio?'border:2px solid #FF9500;box-shadow:0 0 0 3px rgba(255,149,0,0.15)':'';
   const vazioTag=vazio?`<div style="background:#FF9500;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;text-align:center;letter-spacing:.5px">⚠️ PALPITE PENDENTE</div>`:'';
@@ -1503,7 +1514,7 @@ function render(){
       <div class="login-tit">BOLÃO COPA 2026</div>
       <div class="login-sub">🇺🇸 🇲🇽 🇨🇦 · 48 seleções · 104 jogos</div>
       <label class="lbl">Seu nome no bolão:</label>
-      <input class="login-inp" id="ln" value="${esc(loginNome)}" placeholder="Digite seu nome"
+      <input class="login-inp" id="ln" value="${esc(loginNome)}" placeholder="${t('Digite seu nome','Enter your name')}"
         oninput="STATE.loginNome=this.value" onkeydown="if(event.key==='Enter')fazerLogin()"/>
       <label class="lbl">Código de acesso (ou senha admin):</label>
       <div style="position:relative">
@@ -1519,7 +1530,7 @@ function render(){
         <input type="checkbox" id="lembrar" ${STATE.lembrarLogin?'checked':''} onchange="STATE.lembrarLogin=this.checked" style="width:16px;height:16px;cursor:pointer;accent-color:#660099"/>
         <label for="lembrar" style="font-size:13px;color:var(--text2);cursor:pointer;font-weight:500">Manter conectado</label>
       </div>
-      <button class="login-btn" onclick="fazerLogin(document.getElementById('lembrar').checked)">🚀 Entrar no Bolão</button>
+      <button class="login-btn" onclick="fazerLogin(document.getElementById('lembrar').checked)">${t('🚀 Entrar no Bolão','🚀 Enter the Pool')}</button>
       ${loginErro?`<div class="login-err">${loginErro}</div>`:''}
       <div class="login-codigo-hint">💡 Não tem código? Peça ao organizador!</div>
       <div class="login-hint">Administradores entram com senha especial</div>
@@ -1538,14 +1549,15 @@ function render(){
     <div class="hdr-user">
       <span style="font-size:13px;font-weight:700">Olá, <strong>${esc(usuario.nome)}</strong></span>
       ${usuario.isAdmin?'<span class="badge-admin">⭐ ADMIN</span>':'<span class="badge-user">👤 Participante</span>'}
+      <button class="logout-btn" onclick="toggleIdioma()" style="padding:5px 10px">${STATE.idioma==='pt'?'🇺🇸':'🇧🇷'}</button>
       <button class="logout-btn" onclick="toggleDarkMode()" style="padding:5px 10px">${STATE.darkMode?'☀️':'🌙'}</button>
-      <button class="logout-btn" onclick="if(!STATE.lembrarLogin){localStorage.removeItem('bolao_nome');localStorage.removeItem('bolao_senha');}STATE.usuario=null;STATE.aba='participantes';render()">Sair 🚪</button>
+      <button class="logout-btn" onclick="if(!STATE.lembrarLogin){localStorage.removeItem('bolao_nome');localStorage.removeItem('bolao_senha');}STATE.usuario=null;STATE.aba='participantes';render()">${t('Sair','Exit')} 🚪</button>
     </div>
   </div></header>`;
 
   // NAV
   html+=`<nav class="nav">`;
-  [['participantes','👥 Participantes'],['palpites','⚽ Palpites'],['campeao','🏆 Campeão'],['matamat','⚔️ Mata-Mata']].forEach(([id,label])=>{
+  [['participantes',t('👥 Participantes','👥 Participants')],['palpites',t('⚽ Palpites','⚽ Predictions')],['campeao',t('🏆 Campeão','🏆 Champion')],['matamat',t('⚔️ Mata-Mata','⚔️ Knockout')]].forEach(([id,label])=>{
     html+=`<button class="nb${aba===id?' on':''}" onclick="STATE.aba='${id}';STATE.partAtual=null;STATE.partMMAtual=null;STATE.partEspAtual=null;render()">${label}</button>`;
   });
   if(usuario.isAdmin){
@@ -1579,7 +1591,7 @@ function render(){
         const qm=palpites[n+'_mm']?Object.values(palpites[n+'_mm']).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length:0;
         const totalJogos=JOGOS_GRUPO.length;
         const completo=qg>=totalJogos;
-        const statusGrupo=qg===0?'⏳ Sem palpites':completo?'✅ Grupos completo':'✏️ '+qg+' de '+totalJogos+' palpites';
+        const statusGrupo=qg===0?t('⏳ Sem palpites','⏳ No predictions'):completo?t('✅ Grupos completo','✅ Groups complete'):'✏️ '+qg+' de '+totalJogos+' palpites';
         const statusMM=qm>0?'⚔️ '+qm+' MM':'';
         const statusEsp=e.camp?'🏆 '+esc(e.camp):'';
         const partes=[statusGrupo,statusMM,statusEsp].filter(Boolean);
@@ -1655,7 +1667,7 @@ function render(){
       const q=Object.values(palN).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length;
       const totalJogos=JOGOS_GRUPO.length;
       const completo=q>=totalJogos;
-      const statusTxt=bloq?'🔒 Confirmado e bloqueado':completo?'✅ Grupos completo':q>0?'✏️ '+q+' de '+totalJogos+' palpites':'⏳ Sem palpites ainda';
+      const statusTxt=bloq?'🔒 Confirmado e bloqueado':completo?t('✅ Grupos completo','✅ Groups complete'):q>0?'✏️ '+q+' de '+totalJogos+' palpites':t('⏳ Sem palpites ainda','⏳ No predictions yet');
       html+=`<div class="pi-item" onclick="abrirPalpites(STATE.partics.find(p=>typeof p==='string'?p==='${esc(n)}':p.nome==='${esc(n)}'))">
         <div style="font-size:24px">${bloq?'🔒':'✏️'}</div>
         <div class="pi-info">
@@ -1705,7 +1717,7 @@ function render(){
       });
     });
     if(!bloq||usuario.isAdmin){
-      if(!usuario.isAdmin) html+=`<button class="btn-confirm" onclick="confirmarPalpites()">✅ Salvar e Enviar Palpites</button>`;
+      if(!usuario.isAdmin) html+=`<button class="btn-confirm" onclick="confirmarPalpites()">${t('✅ Salvar e Enviar Palpites','✅ Save & Submit Predictions')}</button>`;
     }
     // Histórico de pontos
     const histDados=calcularHistorico(partAtual,palpites,resultados,resEsp,especiais,regras);
@@ -1715,7 +1727,7 @@ function render(){
     html+=`<div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn2" style="flex:1" onclick="exportarGrupos('${esc(partAtual)}')">🖨️ Imprimir Grupos</button>
     </div>`;
-    html+=`<button class="btn2" onclick="STATE.partAtual=null;STATE.imagemRef=null;STATE.imagemRefNome=null;render()">← Voltar</button>`;
+    html+=`<button class="btn2" onclick="STATE.partAtual=null;STATE.imagemRef=null;STATE.imagemRefNome=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>`;
   }
 
   // ═══ CAMPEÃO ═══
@@ -1761,8 +1773,8 @@ function render(){
       <label class="lbl">🥇 ARTILHEIRO:</label>
       <input class="inp" value="${esc(espLocal.art||'')}" placeholder="Nome do artilheiro" ${disEsp}
         oninput="STATE.espLocal.art=this.value"/>
-      ${!bloqEsp||usuario.isAdmin?`<button class="btn" onclick="salvarEspeciais()">💾 Salvar</button>`:''}
-      <button class="btn2" onclick="STATE.partEspAtual=null;render()">← Voltar</button>
+      ${!bloqEsp||usuario.isAdmin?`<button class="btn" onclick="salvarEspeciais()">${t('💾 Salvar','💾 Save')}</button>`:''}
+      <button class="btn2" onclick="STATE.partEspAtual=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>
     </div></div>`;
   }
 
@@ -1801,7 +1813,7 @@ function render(){
           <div style="font-size:24px">${bloq?'🔒':'⚔️'}</div>
           <div class="pi-info">
             <div class="pi-nome">${esc(n)}</div>
-            <div class="pi-st">${bloq?'🔒 Confirmado':(q>0?'✅ '+q+' palpite(s)':'⏳ Sem palpites')}</div>
+            <div class="pi-st">${bloq?'🔒 Confirmado':(q>0?'✅ '+q+' palpite(s)':t('⏳ Sem palpites','⏳ No predictions'))}</div>
           </div>
           <span style="color:#ccc;font-size:18px">›</span>
         </div>`;
@@ -1828,7 +1840,7 @@ function render(){
     html+=`<div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn2" style="flex:1" onclick="exportarMataM('${esc(partMMAtual)}')">🖨️ Imprimir Mata-Mata</button>
     </div>`;
-    html+=`<button class="btn2" onclick="STATE.partMMAtual=null;render()">← Voltar</button>`;
+    html+=`<button class="btn2" onclick="STATE.partMMAtual=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>`;
   }
 
   // ═══ RANKING ═══
