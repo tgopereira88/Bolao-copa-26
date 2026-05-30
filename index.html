@@ -943,7 +943,7 @@ function verRankingHTML(ranking,pts,exatos){
   </div>
   <div style="height:16px"></div>
   <div class="card">${rows}</div>
-  <div class="footer">⚖️ Desempate: placares exatos · ordem alfabética<br><span style="color:#C0A8D8">bolao-copa-pereira.vercel.app</span></div>
+  <div class="footer">${t("⚖️ Desempate: placares exatos · ordem alfabética","⚖️ Tiebreaker: exact scores · alphabetical order")}<br><span style="color:#C0A8D8">bolao-copa-pereira.vercel.app</span></div>
   </body></html>`;
 
   // Abre overlay interno
@@ -1200,13 +1200,13 @@ function exportarRegras(){
   var html=gerarCabecalho('Regras','📋 Regras de Pontuação');
   html+='<table><tr><td colspan="3" class="cab">REGRAS DE PONTUAÇÃO</td></tr>';
   [
-    {id:'r_exato',icon:'🎯',tit:'Placar Exato (Grupos)',sub:'Acertou o placar certinho (ex: 2×1)'},
-    {id:'r_venc',icon:'✅',tit:'Vencedor / Empate (Grupos)',sub:'Acertou quem ganhou ou que empatou'},
-    {id:'r_camp',icon:'🏆',tit:'Campeão',sub:'Acertou a seleção campeã do mundo'},
-    {id:'r_vice',icon:'🥈',tit:'Vice-Campeão',sub:'Acertou a seleção vice-campeã'},
-    {id:'r_art',icon:'🥇',tit:'Artilheiro',sub:'Acertou o artilheiro da Copa'},
-    {id:'r_mmexato',icon:'⚔️',tit:'Placar Exato (Mata-Mata)',sub:'Placar exato em jogo eliminatório'},
-    {id:'r_mmvenc',icon:'⚔️',tit:'Vencedor (Mata-Mata)',sub:'Acertou o classificado, mas não o placar'},
+    {id:'r_exato',icon:'🎯',tit:'${t("Placar Exato","Exact Score")} (Grupos)',sub:'${t("Acertou o placar certinho (ex: 2×1)","Predicted the exact score (e.g. 2×1)")}'},
+    {id:'r_venc',icon:'✅',tit:'${t("Vencedor / Empate","Winner / Draw")} (Grupos)',sub:'${t("Acertou quem ganhou ou que empatou","Predicted the winner or draw")}'},
+    {id:'r_camp',icon:'🏆',tit:'Campeão',sub:'${t("Acertou a seleção campeã do mundo","Predicted the world champion")}'},
+    {id:'r_vice',icon:'🥈',tit:'Vice-Campeão',sub:'${t("Acertou a seleção vice-campeã","Predicted the runner-up")}'},
+    {id:'r_art',icon:'🥇',tit:'Artilheiro',sub:'${t("Acertou o artilheiro da Copa","Predicted the top scorer")}'},
+    {id:'r_mmexato',icon:'⚔️',tit:'${t("Placar Exato (Mata-Mata)","Exact Score (Knockout)")}',sub:'${t("Placar exato em jogo eliminatório","Exact score in knockout match")}'},
+    {id:'r_mmvenc',icon:'⚔️',tit:'${t("Vencedor (Mata-Mata)","Winner (Knockout)")}',sub:'${t("Acertou o classificado, mas não o placar","Predicted the winner but not the score")}'},
   ].forEach(r=>{
     html+='<tr><td style="padding:8px;text-align:center;width:30px">'+r.icon+'</td>'
       +'<td style="padding:8px"><b>'+r.tit+'</b><br><span style="font-size:7px;color:#666">'+r.sub+'</span></td>'
@@ -1435,10 +1435,10 @@ function jogoCardHTML(jogo,valor,disabled,onChange,ptJogo){
   const vazio=!tbd&&!disabled&&(g1===''||g2==='');
   const ptColor=ptJogo===undefined||ptJogo===''?'#aaa':ptJogo==='0'?'#FF3B30':'#34C759';
   const ptBadge=ptJogo!==undefined&&ptJogo!==''
-    ?`<div style="text-align:center;padding:2px 0 8px;font-size:12px;font-weight:700;color:${ptColor}">${ptJogo==='0'?t('Sem pts','No pts'):ptJogo+' pts'}</div>`
+    ?`<div style="text-align:center;padding:2px 0 8px;font-size:12px;font-weight:700;color:${ptColor}">${ptJogo==='0'?t(t('Sem pts','No pts'),'No pts'):ptJogo+t(' pts',' pts')}</div>`
     :'';
   const vazioStyle=vazio?'border:2px solid #FF9500;box-shadow:0 0 0 3px rgba(255,149,0,0.15)':'';
-  const vazioTag=vazio?`<div style="background:#FF9500;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;text-align:center;letter-spacing:.5px">⚠️ PALPITE PENDENTE</div>`:'';
+  const vazioTag=vazio?`<div style="background:#FF9500;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;text-align:center;letter-spacing:.5px">${t("⚠️ PALPITE PENDENTE","⚠️ PREDICTION PENDING")}</div>`:'';
   return `<div class="jcard" style="${vazioStyle}">
     ${vazioTag}
     <div class="jtopo"><span>${jogo.data||''}</span></div>
@@ -1512,7 +1512,7 @@ function render(){
     html+=`<div class="login-wrap"><div class="login-box">
       <span class="login-bola">⚽</span>
       <div class="login-tit">BOLÃO COPA 2026</div>
-      <div class="login-sub">🇺🇸 🇲🇽 🇨🇦 · 48 seleções · 104 jogos</div>
+      <div class="login-sub">🇺🇸 🇲🇽 🇨🇦 · ${t("48 seleções · 104 jogos","48 teams · 104 games")}</div>
       <label class="lbl">Seu nome no bolão:</label>
       <input class="login-inp" id="ln" value="${esc(loginNome)}" placeholder="${t('Digite seu nome','Enter your name')}"
         oninput="STATE.loginNome=this.value" onkeydown="if(event.key==='Enter')fazerLogin()"/>
@@ -1545,7 +1545,7 @@ function render(){
   html+=`<header class="hdr"><div class="hdr-inner">
     <div style="font-size:40px;margin-bottom:2px">⚽</div>
     <h1>BOLÃO COPA 2026</h1>
-    <div class="hdr-sub">🇺🇸 🇲🇽 🇨🇦 · 48 seleções · 104 jogos · 11 jun – 19 jul</div>
+    <div class="hdr-sub">🇺🇸 🇲🇽 🇨🇦 · ${t("48 seleções · 104 jogos · 11 jun – 19 jul","48 teams · 104 games · Jun 11 – Jul 19")}</div>
     <div class="hdr-user">
       <span style="font-size:13px;font-weight:700">Olá, <strong>${esc(usuario.nome)}</strong></span>
       ${usuario.isAdmin?'<span class="badge-admin">⭐ ADMIN</span>':'<span class="badge-user">👤 Participante</span>'}
@@ -1696,8 +1696,8 @@ function render(){
     }
     html+=`<div class="card"><div class="ct">⚽ Palpites de ${esc(partAtual)}</div><div class="cb">
       ${bloq?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px">
-        🔒 <span>Seus palpites estão bloqueados pelo admin. Você pode acompanhar seus palpites abaixo.</span>
-      </div>`:`<div class="aviso">📝 Use + e − ou clique no número para digitar o placar.</div>`}
+        🔒 <span>${t("Seus palpites estão bloqueados pelo admin. Você pode acompanhar seus palpites abaixo.","Your predictions are locked by the admin. You can still view them below.")}</span>
+      </div>`:`<div class="aviso">${t("📝 Use + e − ou clique no número para digitar o placar.","📝 Use + and − or tap the number to enter the score.")}</div>`}
       ${bloq&&usuario.isAdmin?`<div class="aviso-lock" style="margin-top:8px">⚠️ Admin editando palpite BLOQUEADO</div>`:''}
       ${mostrarImagem?`<div class="aviso" style="background:#fff3e0;border-color:#f57c00;margin-top:8px">📸 Você está digitando os palpites vendo a imagem acima. Lembre-se de salvar ao final!</div>`:''}
     </div></div>`;
@@ -1717,7 +1717,7 @@ function render(){
       });
     });
     if(!bloq||usuario.isAdmin){
-      if(!usuario.isAdmin) html+=`<button class="btn-confirm" onclick="confirmarPalpites()">${t('✅ Salvar e Enviar Palpites','✅ Save & Submit Predictions')}</button>`;
+      if(!usuario.isAdmin) html+=`<button class="btn-confirm" onclick="confirmarPalpites()">${t('${t("✅ Salvar e Enviar Palpites","✅ Save & Submit Predictions")}','✅ Save & Submit Predictions')}</button>`;
     }
     // Histórico de pontos
     const histDados=calcularHistorico(partAtual,palpites,resultados,resEsp,especiais,regras);
@@ -1725,7 +1725,7 @@ function render(){
       ${gerarGraficoSVG(histDados,340,150)}
     </div></div>`;
     html+=`<div style="display:flex;gap:8px;margin-top:6px">
-      <button class="btn2" style="flex:1" onclick="exportarGrupos('${esc(partAtual)}')">🖨️ Imprimir Grupos</button>
+      <button class="btn2" style="flex:1" onclick="exportarGrupos('${esc(partAtual)}')">${t("🖨️ Imprimir Grupos","🖨️ Print Groups")}</button>
     </div>`;
     html+=`<button class="btn2" onclick="STATE.partAtual=null;STATE.imagemRef=null;STATE.imagemRefNome=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>`;
   }
@@ -1764,14 +1764,14 @@ function render(){
       ${bloqEsp?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px;margin-bottom:10px">
         🔒 <span>Seus palpites estão bloqueados pelo admin.</span>
       </div>`:''}
-      <label class="lbl">🏆 Seleção CAMPEÃ:</label>
-      <input class="inp" value="${esc(espLocal.camp||'')}" placeholder="Seleção campeã" ${disEsp}
+      <label class="lbl">${t("🏆 Seleção CAMPEÃ:","🏆 CHAMPION team:")}</label>
+      <input class="inp" value="${esc(espLocal.camp||'')}" placeholder="${t("Seleção campeã","Champion team")}" ${disEsp}
         oninput="STATE.espLocal.camp=this.value"/>
-      <label class="lbl">🥈 Seleção VICE-CAMPEÃ:</label>
-      <input class="inp" value="${esc(espLocal.vice||'')}" placeholder="Seleção vice-campeã" ${disEsp}
+      <label class="lbl">${t("🥈 Seleção VICE-CAMPEÃ:","🥈 RUNNER-UP team:")}</label>
+      <input class="inp" value="${esc(espLocal.vice||'')}" placeholder="${t("Seleção vice-campeã","Runner-up team")}" ${disEsp}
         oninput="STATE.espLocal.vice=this.value"/>
-      <label class="lbl">🥇 ARTILHEIRO:</label>
-      <input class="inp" value="${esc(espLocal.art||'')}" placeholder="Nome do artilheiro" ${disEsp}
+      <label class="lbl">${t("🥇 ARTILHEIRO:","🥇 TOP SCORER:")}</label>
+      <input class="inp" value="${esc(espLocal.art||'')}" placeholder="${t("Nome do artilheiro","Top scorer name")}" ${disEsp}
         oninput="STATE.espLocal.art=this.value"/>
       ${!bloqEsp||usuario.isAdmin?`<button class="btn" onclick="salvarEspeciais()">${t('💾 Salvar','💾 Save')}</button>`:''}
       <button class="btn2" onclick="STATE.partEspAtual=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>
@@ -1784,8 +1784,8 @@ function render(){
       if(!mmHabilitado()){
         html+=`<div class="card"><div class="cb" style="text-align:center;padding:32px 16px">
           <div style="font-size:48px;margin-bottom:12px">⏳</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text)">Mata-Mata ainda não disponível</div>
-          <div style="font-size:13px;color:var(--text2);margin-top:8px">O admin irá habilitar quando chegar a fase eliminatória.</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">${t("Mata-Mata ainda não disponível","Knockout Stage Not Available Yet")}</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:8px">${t("O admin irá habilitar quando chegar a fase eliminatória.","The admin will enable it when the knockout stage begins.")}</div>
         </div></div>`;
       } else {
         const meuP=STATE.partics.find(p=>getNome(p).toLowerCase()===usuario.nome.toLowerCase());
@@ -1826,8 +1826,8 @@ function render(){
     html+=`<div class="card"><div class="ct">⚔️ Mata-Mata de ${esc(partMMAtual)}</div>
       <div class="cb">
         ${bloqMMatual&&!usuario.isAdmin?`<div style="background:#F3E5F5;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#4B0073;display:flex;align-items:center;gap:8px">
-          🔒 <span>Mata-mata bloqueado pelo admin.</span></div>`
-          :`<div class="aviso">📝 Times em cinza ainda não foram definidos.</div>`}
+          🔒 <span>${t("Mata-mata bloqueado pelo admin.","Knockout stage locked by the admin.")}</span></div>`
+          :`<div class="aviso">${t("📝 Times em cinza ainda não foram definidos.","📝 Teams in gray have not been defined yet.")}</div>`}
       </div>
     </div>`;
     FASES_MM.forEach(fase=>{
@@ -1838,7 +1838,7 @@ function render(){
       });
     });
     html+=`<div style="display:flex;gap:8px;margin-top:6px">
-      <button class="btn2" style="flex:1" onclick="exportarMataM('${esc(partMMAtual)}')">🖨️ Imprimir Mata-Mata</button>
+      <button class="btn2" style="flex:1" onclick="exportarMataM('${esc(partMMAtual)}')">${t("🖨️ Imprimir Mata-Mata","🖨️ Print Knockout")}</button>
     </div>`;
     html+=`<button class="btn2" onclick="STATE.partMMAtual=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>`;
   }
@@ -1871,14 +1871,14 @@ function render(){
 
     if(ranking.length>0){
       html+=`<div class="card"><div class="ct">📲 Compartilhar Ranking</div><div class="cb">
-        <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:12px">Escolha como compartilhar o ranking:</p>
+        <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:12px">${t("Escolha como compartilhar o ranking:","Choose how to share the ranking:")}</p>
         <button class="btn-whatsapp" onclick="compartilharRanking(ranking_,pts_,exatos_)" style="margin-bottom:10px">
           <span style="font-size:20px">🖼️</span> Gerar Imagem (PNG)
         </button>
         <button class="btn-whatsapp" onclick="verRankingHTML(ranking_,pts_,exatos_)" style="background:linear-gradient(135deg,#660099,#9B30D9)">
           <span style="font-size:20px">✨</span> Ver Ranking Completo
         </button>
-        <p style="font-size:11px;color:#999;margin-top:8px;text-align:center">💡 "Ver Ranking" abre tela cheia — tire screenshot ou use o compartilhar do Safari para qualidade máxima</p>
+        <p style="font-size:11px;color:#999;margin-top:8px;text-align:center">${t("💡 \"Ver Ranking\" abre tela cheia","💡 \"View Full Ranking\" opens full screen")} ${t("— tire screenshot ou use o compartilhar do Safari para qualidade máxima","— take a screenshot or use Safari share for best quality")}</p>
       </div></div>`;
       // Expõe para o onclick
       window.ranking_=ranking; window.pts_=pts; window.exatos_=exatos;
@@ -1975,8 +1975,8 @@ function render(){
       html+=`</div></div>`;
     } else {
       // User normal: só lê
-      html+=`<div class="card"><div class="ct">⚙️ Regras de Pontuação</div><div class="cb">
-        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Veja quantos pontos você ganha em cada acerto.</p>`;
+      html+=`<div class="card"><div class="ct">${t("⚙️ Regras de Pontuação","⚙️ Scoring Rules")}</div><div class="cb">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">${t("Veja quantos pontos você ganha em cada acerto.","See how many points you earn for each correct prediction.")}</p>`;
       [
         {id:'r_exato',icon:'🎯',tit:'Placar Exato',sub:'Acertou o placar certinho (ex: 2×1)'},
         {id:'r_venc',icon:'✅',tit:'Vencedor / Empate',sub:'Acertou quem ganhou ou que empatou'},
@@ -1999,9 +1999,9 @@ function render(){
     html+=`<button class="btn2" onclick="exportarRegras()">🖨️ Imprimir Regras</button>`;
     
     // Exportar dados (pra todos)
-    html+=`<div class="card"><div class="ct">📥 Exportar Dados</div><div class="cb">
-      <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:10px">Baixe todos os palpites em planilha (.csv).</p>
-      <button class="btn-export" onclick="exportarPalpites()">📊 Baixar todos os palpites (.csv)</button>
+    html+=`<div class="card"><div class="ct">${t("📥 Exportar Dados","📥 Export Data")}</div><div class="cb">
+      <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:10px">${t("Baixe todos os palpites em planilha (.csv).","Download all predictions as spreadsheet (.csv).")}</p>
+      <button class="btn-export" onclick="exportarPalpites()">${t("📊 Baixar todos os palpites (.csv)","📊 Download all predictions (.csv)")}</button>
     </div></div>`;
 
     // Admin: configurações extras
@@ -2040,23 +2040,23 @@ function render(){
     const p3lugar=Math.round(valorTotal*STATE.pct3lugar/100);
 
     // Mostrar prêmio para todos
-    html+=`<div class="card"><div class="ct">🏆 Prêmios em Jogo</div><div class="cb">
+    html+=`<div class="card"><div class="ct">${t("🏆 Prêmios em Jogo","🏆 Prize Pool")}</div><div class="cb">
       <div style="text-align:center;margin-bottom:16px">
         <div style="font-size:24px;font-weight:700;color:#660099">R$ ${valorTotal.toLocaleString('pt-BR')}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px">${totalPartic} participantes × R$ ${STATE.valorPartic.toLocaleString('pt-BR')}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">${totalPartic} ${t("participantes","participants")} × R$ ${STATE.valorPartic.toLocaleString('pt-BR')}</div>
       </div>
       <div class="premia-row">
-        <div class="premia-pos">🥇 1º lugar</div>
+        <div class="premia-pos">${t("🥇 1º lugar","🥇 1st place")}</div>
         <div class="premia-val">R$ ${p1lugar.toLocaleString('pt-BR')}</div>
         <div class="premia-pct">${STATE.pct1lugar}%</div>
       </div>
       <div class="premia-row">
-        <div class="premia-pos">🥈 2º lugar</div>
+        <div class="premia-pos">${t("🥈 2º lugar","🥈 2nd place")}</div>
         <div class="premia-val">R$ ${p2lugar.toLocaleString('pt-BR')}</div>
         <div class="premia-pct">${STATE.pct2lugar}%</div>
       </div>
       <div class="premia-row">
-        <div class="premia-pos">🥉 3º lugar</div>
+        <div class="premia-pos">${t("🥉 3º lugar","🥉 3rd place")}</div>
         <div class="premia-val">R$ ${p3lugar.toLocaleString('pt-BR')}</div>
         <div class="premia-pct">${STATE.pct3lugar}%</div>
       </div>
