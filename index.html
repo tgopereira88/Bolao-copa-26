@@ -1575,8 +1575,8 @@ function render(){
         const e=especiais[n]||{};
         // Conta só palpites realmente preenchidos (g1 e g2 não vazios)
         const palN=palpites[n]||{};
-        const qg=Object.values(palN).filter(v=>v&&v.g1!==''&&v.g1!==undefined&&v.g2!==''&&v.g2!==undefined).length;
-        const qm=palpites[n+'_mm']?Object.values(palpites[n+'_mm']).filter(v=>v&&v.g1!==''&&v.g1!==undefined&&v.g2!==''&&v.g2!==undefined).length:0;
+        const qg=Object.values(palN).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length;
+        const qm=palpites[n+'_mm']?Object.values(palpites[n+'_mm']).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length:0;
         const totalJogos=JOGOS_GRUPO.length;
         const completo=qg>=totalJogos;
         const statusGrupo=qg===0?'⏳ Sem palpites':completo?'✅ Grupos completo':'✏️ '+qg+' de '+totalJogos+' palpites';
@@ -1651,12 +1651,16 @@ function render(){
     if(lista.length===0){html+=`<div style="padding:20px;text-align:center;color:#aaa">Adicione participantes primeiro!</div>`;}
     else lista.forEach(p=>{
       const n=getNome(p),bloq=isBloqueado(p);
-      const q=palpites[n]?Object.keys(palpites[n]).length:0;
+      const palN=palpites[n]||{};
+      const q=Object.values(palN).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length;
+      const totalJogos=JOGOS_GRUPO.length;
+      const completo=q>=totalJogos;
+      const statusTxt=bloq?'🔒 Confirmado e bloqueado':completo?'✅ Grupos completo':q>0?'✏️ '+q+' de '+totalJogos+' palpites':'⏳ Sem palpites ainda';
       html+=`<div class="pi-item" onclick="abrirPalpites(STATE.partics.find(p=>typeof p==='string'?p==='${esc(n)}':p.nome==='${esc(n)}'))">
         <div style="font-size:24px">${bloq?'🔒':'✏️'}</div>
         <div class="pi-info">
           <div class="pi-nome">${esc(n)}</div>
-          <div class="pi-st">${bloq?'🔒 Confirmado e bloqueado':(q>0?'✅ '+q+' palpite(s) salvo(s)':'⏳ Sem palpites ainda')}</div>
+          <div class="pi-st">${statusTxt}</div>
         </div>
         <span style="color:#ccc;font-size:18px">›</span>
       </div>`;
