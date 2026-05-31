@@ -1176,7 +1176,10 @@ async function salvarCodigoPartic(nome, cod){
   render();
 }
 
-function convidarWhatsApp(nome){
+async function convidarWhatsApp(nome){
+  // Busca o código mais atualizado direto do Firebase
+  const codFresh = await fbGet('codigos');
+  if(codFresh) STATE.codigos = codFresh;
   const codigos=STATE.codigos||{};
   const codigoKey=Object.keys(codigos).find(k=>k.toLowerCase()===nome.toLowerCase());
   const codigo=codigoKey?codigos[codigoKey]:(STATE.codigo||'T2026');
