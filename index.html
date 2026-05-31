@@ -646,7 +646,7 @@ function showToast(msg){
 // ══════════════════════════════════════════════════════
 // AÇÕES
 // ══════════════════════════════════════════════════════
-async function fazerLogin(){
+async function fazerLogin(lembrar){
   const nomeRaw=STATE.loginNome.trim();
   if(!nomeRaw){STATE.loginErro='✏️ Digite seu nome!';render();return;}
   const keyNorm=nomeRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -665,6 +665,17 @@ async function fazerLogin(){
       STATE.partics=novos;
       await fbSet('partics',novos);
     }
+  }
+  // Salvar credenciais se "Manter conectado" estiver marcado
+  const deveLembrar = lembrar !== undefined ? lembrar : STATE.lembrarLogin;
+  if(deveLembrar){
+    localStorage.setItem('bolao_nome', nomeRaw);
+    localStorage.setItem('bolao_senha', STATE.loginSenha.trim());
+    localStorage.setItem('bolao_lembrar','1');
+  } else {
+    localStorage.removeItem('bolao_nome');
+    localStorage.removeItem('bolao_senha');
+    localStorage.setItem('bolao_lembrar','0');
   }
   STATE.loginErro='';STATE.partAtual=null;STATE.partMMAtual=null;STATE.partEspAtual=null;
   STATE.aba='palpites';
