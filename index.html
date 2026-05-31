@@ -1243,13 +1243,13 @@ function exportarRegras(){
   var html=gerarCabecalho('Regras','📋 Regras de Pontuação');
   html+='<table><tr><td colspan="3" class="cab">REGRAS DE PONTUAÇÃO</td></tr>';
   [
-    {id:'r_exato',icon:'🎯',tit:'${t("Placar Exato","Exact Score")} (Grupos)',sub:'${t("Acertou o placar certinho (ex: 2×1)","Predicted the exact score (e.g. 2×1)")}'},
-    {id:'r_venc',icon:'✅',tit:'${t("Vencedor / Empate","Winner / Draw")} (Grupos)',sub:'${t("Acertou quem ganhou ou que empatou","Predicted the winner or draw")}'},
-    {id:'r_camp',icon:'🏆',tit:'${t("Campeão","Champion")}',sub:'${t("Acertou a seleção campeã do mundo","Predicted the world champion")}'},
-    {id:'r_vice',icon:'🥈',tit:'${t("Vice-Campeão","Runner-Up")}',sub:'${t("Acertou a seleção vice-campeã","Predicted the runner-up")}'},
-    {id:'r_art',icon:'🥇',tit:'${t("Artilheiro","Top Scorer")}',sub:'${t("Acertou o artilheiro da Copa","Predicted the top scorer")}'},
-    {id:'r_mmexato',icon:'⚔️',tit:'${t("Placar Exato (Mata-Mata)","Exact Score (Knockout)")}',sub:'${t("Placar exato em jogo eliminatório","Exact score in knockout match")}'},
-    {id:'r_mmvenc',icon:'⚔️',tit:'${t("Vencedor (Mata-Mata)","Winner (Knockout)")}',sub:'${t("Acertou o classificado, mas não o placar","Predicted the winner but not the score")}'},
+    {id:'r_exato',icon:'🎯',tit:t('Placar Exato','Exact Score')+' ('+t('Grupos','Groups')+')',sub:t('Acertou o placar certinho (ex: 2×1)','Predicted the exact score (e.g. 2×1)')},
+    {id:'r_venc',icon:'✅',tit:t('Vencedor / Empate','Winner / Draw')+' ('+t('Grupos','Groups')+')',sub:t('Acertou quem ganhou ou que empatou','Predicted the winner or draw')},
+    {id:'r_camp',icon:'🏆',tit:t('Campeão','Champion'),sub:t('Acertou a seleção campeã do mundo','Predicted the world champion')},
+    {id:'r_vice',icon:'🥈',tit:t('Vice-Campeão','Runner-Up'),sub:t('Acertou a seleção vice-campeã','Predicted the runner-up')},
+    {id:'r_art',icon:'🥇',tit:t('Artilheiro','Top Scorer'),sub:t('Acertou o artilheiro da Copa','Predicted the top scorer')},
+    {id:'r_mmexato',icon:'⚔️',tit:t('Placar Exato (Mata-Mata)','Exact Score (Knockout)'),sub:t('Placar exato em jogo eliminatório','Exact score in knockout match')},
+    {id:'r_mmvenc',icon:'⚔️',tit:t('Vencedor (Mata-Mata)','Winner (Knockout)'),sub:t('Acertou o classificado, mas não o placar','Predicted the winner but not the score')},
   ].forEach(r=>{
     html+='<tr><td style="padding:8px;text-align:center;width:30px">'+r.icon+'</td>'
       +'<td style="padding:8px"><b>'+r.tit+'</b><br><span style="font-size:7px;color:#666">'+r.sub+'</span></td>'
@@ -1774,7 +1774,7 @@ function render(){
       });
     });
     if(!bloq||usuario.isAdmin){
-      if(!usuario.isAdmin) html+=`<button class="btn-confirm" onclick="confirmarPalpites()">${t('${t("✅ Salvar e Enviar Palpites","✅ Save & Submit Predictions")}','✅ Save & Submit Predictions')}</button>`;
+      if(!usuario.isAdmin) html+=`<button class="btn-confirm" onclick="confirmarPalpites()">${t('✅ Salvar e Enviar Palpites','✅ Save & Submit Predictions')}</button>`;
     }
     // Histórico de pontos
     const histDados=calcularHistorico(partAtual,palpites,resultados,resEsp,especiais,regras);
