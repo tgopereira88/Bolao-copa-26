@@ -1176,6 +1176,37 @@ async function salvarCodigoPartic(nome, cod){
   render();
 }
 
+function convidarWhatsApp(nome){
+  const codigos=STATE.codigos||{};
+  const codigoKey=Object.keys(codigos).find(k=>k.toLowerCase()===nome.toLowerCase());
+  const codigo=codigoKey?codigos[codigoKey]:(STATE.codigo||'T2026');
+  const texto=
+    '⚽🏆 *BOLÃO COPA DO MUNDO 2026* 🏆⚽\n\n'
+   +'Olá, *'+nome+'*! Segue seu acesso ao bolão:\n\n'
+   +'🌐 *Site:*\n'
+   +'https://bolao-copa-pereira.vercel.app\n\n'
+   +'👤 *Nome de acesso:* '+nome+'\n'
+   +'🔑 *Código:* '+codigo+'\n\n'
+   +'📋 *Como acessar:*\n'
+   +'1️⃣ Abra o link acima no celular\n'
+   +'2️⃣ Digite seu nome: *'+nome+'*\n'
+   +'3️⃣ Digite o código: *'+codigo+'*\n'
+   +'4️⃣ Toque em "Entrar no Bolão" ✅\n\n'
+   +'🎯 *Como palpitar:*\n'
+   +'• Aba *Palpites* → use + e − para cada jogo\n'
+   +'• Aba *Campeão* → campeão, vice e artilheiro\n'
+   +'• Tudo salva automaticamente!\n\n'
+   +'⏰ *Prazo: até 10 de junho!*\n\n'
+   +'Qualquer dúvida chama o Tiago ou o Léo 💪🇧🇷';
+
+  const url='https://wa.me/?text='+encodeURIComponent(texto);
+  if(navigator.share){
+    navigator.share({text:texto}).catch(()=>window.open(url,'_blank'));
+  } else {
+    window.open(url,'_blank');
+  }
+}
+
 function uploadPalpitesPartic(nome){
   // Abre seletor de imagem. Quando admin escolhe, abre a tela de palpites
   // do participante com a imagem fixa no topo como referencia para digitar.
@@ -1650,6 +1681,8 @@ function render(){
               <button style="flex:1;background:#FF9500;color:#fff;border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit"
                 data-idx="${i}" data-acao="export">🖨️ Folha p/ imprimir</button>
             </div>
+            <button style="width:100%;background:#25D366;color:#fff;border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px"
+              data-idx="${i}" data-acao="convidar">💬 Enviar acesso por WhatsApp</button>
           </div>`:''}
         </div>`;
       });
@@ -2094,18 +2127,18 @@ function render(){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
           <div>
             <div style="font-size:11px;color:#666;margin-bottom:4px">1º lugar %</div>
-            <input type="number" value="${STATE.pct1lugar}" min="0" max="100"
-              onchange="STATE.pct1lugar=parseInt(this.value);fbSet('pct1lugar',STATE.pct1lugar);render()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
+            <input type="number" value="${STATE.pct1lugar}" min="0" max="100" step="0.01"
+              onchange="STATE.pct1lugar=parseFloat(this.value);fbSet('pct1lugar',STATE.pct1lugar);render()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
           </div>
           <div>
             <div style="font-size:11px;color:#666;margin-bottom:4px">2º lugar %</div>
-            <input type="number" value="${STATE.pct2lugar}" min="0" max="100"
-              onchange="STATE.pct2lugar=parseInt(this.value);fbSet('pct2lugar',STATE.pct2lugar);render()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
+            <input type="number" value="${STATE.pct2lugar}" min="0" max="100" step="0.01"
+              onchange="STATE.pct2lugar=parseFloat(this.value);fbSet('pct2lugar',STATE.pct2lugar);render()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
           </div>
           <div style="grid-column:1">
             <div style="font-size:11px;color:#666;margin-bottom:4px">3º lugar %</div>
-            <input type="number" value="${STATE.pct3lugar}" min="0" max="100"
-              onchange="STATE.pct3lugar=parseInt(this.value);fbSet('pct3lugar',STATE.pct3lugar);render()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
+            <input type="number" value="${STATE.pct3lugar}" min="0" max="100" step="0.01"
+              onchange="STATE.pct3lugar=parseFloat(this.value);fbSet('pct3lugar',STATE.pct3lugar);render()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
           </div>
         </div>
         <div class="aviso">📊 Total: ${STATE.pct1lugar}% + ${STATE.pct2lugar}% + ${STATE.pct3lugar}% = ${STATE.pct1lugar+STATE.pct2lugar+STATE.pct3lugar}%</div>
@@ -2168,6 +2201,7 @@ function render(){
         if(inp) salvarCodigoPartic(nome,inp.value);
       }
       else if(acao==='upload') uploadPalpitesPartic(nome);
+      else if(acao==='convidar') convidarWhatsApp(nome);
       else if(acao==='export') exportarPalpitesPartic(nome);
     });
   });
