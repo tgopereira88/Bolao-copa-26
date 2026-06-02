@@ -1924,14 +1924,13 @@ function render(){
       const isAntepenult=i===ranking.length-3&&ranking.length>3;
       const is4th=i===3&&STATE.pct4lugar>0;
       const cls=i===0?'g':i===1?'s':isLast?'last':'n';
-      const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3&&STATE.pct4lugar>0?'🎖️':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1);
+      const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3&&STATE.pct4lugar>0?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1);
       const e=especiais[n]||{};
       const extraStyle=is4th?'border-left:3px solid #9C27B0;background:rgba(156,39,176,0.05);':'';
       html+=`<div class="rk-item" style="${extraStyle}">
         <div class="rpos ${cls}">${med}</div>
         <div class="rnome">
           ${esc(n)}${bloq?'<span class="badge-lock" style="font-size:9px">🔒</span>':''}
-          ${is4th?'<span style="font-size:10px;color:#9C27B0;font-weight:600;margin-left:4px">🎖️ prêmio</span>':''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
           <div class="rpts">${pts[n]||0} pts</div>
@@ -2135,7 +2134,7 @@ function render(){
         <div class="premia-pct">${STATE.pct3lugar}%</div>
       </div>
       ${STATE.pct4lugar>0?`<div class="premia-row" style="border-left-color:#9C27B0">
-        <div class="premia-pos">${t("🎖️ 4º lugar","🎖️ 4th place")}</div>
+        <div class="premia-pos">${t("★ 4º lugar","★ 4th place")}</div>
         <div class="premia-val">R$ ${p4lugar.toLocaleString('pt-BR')}</div>
         <div class="premia-pct">${STATE.pct4lugar}%</div>
       </div>`:''}
