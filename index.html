@@ -200,8 +200,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Sego
 .rpos{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
 .rpos.g{background:var(--gold);color:#5D4300;}
 .rpos.s{background:var(--silver);color:#3A3A3C;}
+.rpos.b{background:#CD7F32;color:#fff;}
 .rpos.last{background:var(--text);color:#fff;}
 .rpos.n{background:var(--bg);color:var(--text2);}
+.rpos.q{background:#CD7F32;color:#fff;}
 .rnome{flex:1;font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.2px;}
 .rnome-sub{font-size:12px;color:var(--text2);font-weight:500;margin-top:2px;}
 .rpts{background:var(--blue);color:#fff;padding:6px 14px;border-radius:20px;font-weight:700;font-size:14px;}
@@ -544,6 +546,7 @@ let STATE = {
   codigos:{}, // código individual por participante
   mmAberto:false, // mata-mata habilitado globalmente pelo admin
   historico:{}, // {nome: [{data, pts, total}]}
+  acessos:{}, // {nome: isoTimestamp}
   valorPartic:20, // valor por participante
   premios:{}, // {nome: {pagou: bool}}
   pct1lugar:50, pct2lugar:30, pct3lugar:20, pct4lugar:0, // percentuais de distribuição
@@ -571,9 +574,9 @@ async function fbSet(key,val){
 }
 
 async function carregarTudo(){
-  const [p,pal,esp,res,re,reg,cod,cods,fotos,mmab,vp,prems,pct1,pct2,pct3,pct4] = await Promise.all([
+  const [p,pal,esp,res,re,reg,cod,cods,fotos,mmab,vp,prems,pct1,pct2,pct3,pct4,acs] = await Promise.all([
     fbGet('partics'),fbGet('palpites'),fbGet('especiais'),
-    fbGet('resultados'),fbGet('resesp'),fbGet('regras'),fbGet('codigo'),fbGet('codigos'),fbGet('fotos'),fbGet('mmAberto'),fbGet('valorPartic'),fbGet('premios'),fbGet('pct1lugar'),fbGet('pct2lugar'),fbGet('pct3lugar'),fbGet('pct4lugar'),
+    fbGet('resultados'),fbGet('resesp'),fbGet('regras'),fbGet('codigo'),fbGet('codigos'),fbGet('fotos'),fbGet('mmAberto'),fbGet('valorPartic'),fbGet('acessos'),fbGet('premios'),fbGet('pct1lugar'),fbGet('pct2lugar'),fbGet('pct3lugar'),fbGet('pct4lugar'),
   ]);
   let particsList = p || [];
   let changed = false;
@@ -599,6 +602,7 @@ async function carregarTudo(){
   if(pct2!==null&&pct2!==undefined) STATE.pct2lugar=pct2;
   if(pct3!==null&&pct3!==undefined) STATE.pct3lugar=pct3;
   if(pct4!==null&&pct4!==undefined) STATE.pct4lugar=pct4;
+  if(acs) STATE.acessos=acs;
   STATE.loading=false;
   render();
 }
@@ -633,6 +637,7 @@ function setupListeners(){
   window._fbListen('pct2lugar',v=>{if(v)STATE.pct2lugar=v;render();});
   window._fbListen('pct3lugar',v=>{if(v)STATE.pct3lugar=v;render();});
   window._fbListen('pct4lugar',v=>{if(v!==null&&v!==undefined)STATE.pct4lugar=v;render();});
+  window._fbListen('acessos',v=>{if(v)STATE.acessos=v;render();});
 }
 
 // ══════════════════════════════════════════════════════
@@ -682,6 +687,13 @@ async function fazerLogin(lembrar){
   STATE.loginErro='';STATE.partAtual=null;STATE.partMMAtual=null;STATE.partEspAtual=null;
   STATE.aba='palpites';
   STATE.usuario={nome:nomeRaw,isAdmin};
+  // Registrar último acesso (sem tocar nos palpites)
+  if(!isAdmin){
+    const agora=new Date().toISOString();
+    const acessos=await fbGet('acessos')||{};
+    acessos[nomeRaw]=agora;
+    fbSet('acessos',acessos);
+  }
   showToast('👋 Bem-vindo, '+nomeRaw+'!');
 }
 
@@ -722,7 +734,7 @@ async function toggleBloqueio(nomePartic, campo){
 
 function gerarGraficoSVG(dados, width, height){
   // dados = [{label, valor}]
-  if(!dados||dados.length<2) return '<div style="text-align:center;color:#aaa;padding:20px;font-size:13px">Ainda sem dados suficientes para o gráfico.<br>${t("O histórico é gerado conforme resultados são inseridos.","History is generated as results are entered.")}</div>';
+  if(!dados||dados.length<2) return '<div style="text-align:center;color:#aaa;padding:20px;font-size:13px">'+t('Ainda sem dados suficientes para o gráfico.','Not enough data for the chart yet.')+'<br>'+t('O histórico é gerado conforme resultados são inseridos.','History is generated as results are entered.')+'</div>';
   const maxVal=Math.max(...dados.map(d=>d.valor),1);
   const padL=8,padR=8,padT=16,padB=28;
   const w=width||320, h=height||140;
@@ -1665,6 +1677,19 @@ function render(){
         const partes=[statusGrupo,statusMM,statusEsp].filter(Boolean);
         const codigoAtual=codigos&&Object.keys(codigos).find(k=>k.toLowerCase()===n.toLowerCase());
         const codigoValor=codigoAtual?codigos[codigoAtual]:'';
+        // Último acesso
+        const ultimoAcesso=STATE.acessos&&STATE.acessos[n];
+        let acessoTxt='';
+        if(ultimoAcesso){
+          const d=new Date(ultimoAcesso);
+          const hoje=new Date();
+          const diff=Math.floor((hoje-d)/3600000);
+          if(diff<1) acessoTxt='👁️ Agora mesmo';
+          else if(diff<24) acessoTxt='👁️ Há '+diff+'h';
+          else acessoTxt='👁️ '+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        } else {
+          acessoTxt='👻 Nunca acessou';
+        }
         // Usar índice numérico para evitar problemas com nomes especiais nos IDs
         html+=`<div class="pi-item" style="flex-direction:column;align-items:stretch;cursor:default;gap:0">
           <div style="display:flex;align-items:center;gap:11px;width:100%">
@@ -1674,6 +1699,7 @@ function render(){
                 ${bloq?'<span class="badge-lock">🔒</span>':'<span class="badge-open">🔓</span>'}
               </div>
               <div class="pi-st">${partes.join(' · ')}</div>
+              ${usuario.isAdmin?`<div style="font-size:11px;color:${ultimoAcesso?'#660099':'#aaa'};font-weight:600;margin-top:2px">${acessoTxt}</div>`:''}
             </div>
             ${usuario.isAdmin?`<div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
               <button class="${bloq?'btn-unlock':'btn-lock'}" data-idx="${i}" data-acao="bloqueio" title="${bloq?'Desbloquear grupos':'Bloquear grupos'}">${bloq?'🔓':'🔒'} G</button>
@@ -1923,10 +1949,10 @@ function render(){
       const isPenult=i===ranking.length-2&&ranking.length>2;
       const isAntepenult=i===ranking.length-3&&ranking.length>3;
       const is4th=i===3&&STATE.pct4lugar>0;
-      const cls=i===0?'g':i===1?'s':isLast?'last':'n';
+      const cls=i===0?'g':i===1?'s':i===2?'b':i===3&&STATE.pct4lugar>0?'q':isLast?'last':'n';
       const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3&&STATE.pct4lugar>0?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1);
       const e=especiais[n]||{};
-      const extraStyle=is4th?'border-left:3px solid #9C27B0;background:rgba(156,39,176,0.05);':'';
+      const extraStyle='';
       html+=`<div class="rk-item" style="${extraStyle}">
         <div class="rpos ${cls}">${med}</div>
         <div class="rnome">
