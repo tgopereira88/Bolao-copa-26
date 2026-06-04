@@ -851,6 +851,20 @@ async function salvarPalpites(skipClose=false){
 }
 
 async function confirmarPalpites(){
+  // Verificar palpites faltando
+  const palN=STATE.palpitesLocal||{};
+  const preenchidos=Object.values(palN).filter(v=>v&&String(v.g1).trim()!==''&&String(v.g2).trim()!=='').length;
+  const total=JOGOS_GRUPO.length;
+  const faltando=total-preenchidos;
+
+  if(faltando>0){
+    const msg=t(
+      '⚠️ Você ainda tem '+faltando+' jogo(s) sem palpite de '+total+'!\n\nSe confirmar agora, seus palpites serão bloqueados e você não poderá mais alterar.\n\nTem certeza que quer confirmar mesmo assim?',
+      '⚠️ You still have '+faltando+' game(s) without a prediction out of '+total+'!\n\nIf you confirm now, your predictions will be locked and you won\'t be able to change them.\n\nAre you sure you want to confirm anyway?'
+    );
+    if(!window.confirm(msg)) return;
+  }
+
   await salvarPalpites(true);
   const novos=STATE.partics.map(p=>{
     if(getNome(p).toLowerCase()!==STATE.partAtual.toLowerCase())return p;
