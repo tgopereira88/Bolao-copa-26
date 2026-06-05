@@ -897,11 +897,40 @@ function abrirEspeciais(p){
   render();
 }
 
+let _espTimer=null;
+function autoSalvarEspeciais(){
+  // Validar campeão ≠ vice
+  const camp=(STATE.espLocal.camp||'').trim().toLowerCase();
+  const vice=(STATE.espLocal.vice||'').trim().toLowerCase();
+  if(camp&&vice&&camp===vice){
+    showToast(t('⚠️ Campeão e vice não podem ser a mesma seleção!','⚠️ Champion and runner-up cannot be the same team!'));
+    STATE.espLocal.vice='';
+    render();
+    return;
+  }
+  // Auto-save com debounce de 800ms
+  clearTimeout(_espTimer);
+  _espTimer=setTimeout(async()=>{
+    if(!STATE.partEspAtual) return;
+    const novoEsp={...STATE.especiais,[STATE.partEspAtual]:{...STATE.espLocal}};
+    STATE.especiais=novoEsp;
+    await fbSet('especiais',novoEsp);
+    showToast(t('💾 Salvo!','💾 Saved!'));
+  },800);
+}
+
 async function salvarEspeciais(){
+  // Validar campeão ≠ vice
+  const camp=(STATE.espLocal.camp||'').trim().toLowerCase();
+  const vice=(STATE.espLocal.vice||'').trim().toLowerCase();
+  if(camp&&vice&&camp===vice){
+    showToast(t('⚠️ Campeão e vice não podem ser a mesma seleção!','⚠️ Champion and runner-up cannot be the same team!'));
+    return;
+  }
   const novoEsp={...STATE.especiais,[STATE.partEspAtual]:STATE.espLocal};
   STATE.especiais=novoEsp; STATE.partEspAtual=null;
   await fbSet('especiais',novoEsp);
-  showToast('💾 Palpites especiais salvos!');
+  showToast(t('💾 Palpites especiais salvos!','💾 Special predictions saved!'));
 }
 
 async function changeRes(jogoId,field,val,pen){
@@ -1876,13 +1905,13 @@ function render(){
       </div>`:''}
       <label class="lbl">${t("🏆 Seleção CAMPEÃ:","🏆 CHAMPION team:")}</label>
       <input class="inp" value="${esc(espLocal.camp||'')}" placeholder="${t("Seleção campeã","Champion team")}" ${disEsp}
-        oninput="STATE.espLocal.camp=this.value"/>
+        oninput="STATE.espLocal.camp=this.value;autoSalvarEspeciais()"/>
       <label class="lbl">${t("🥈 Seleção VICE-CAMPEÃ:","🥈 RUNNER-UP team:")}</label>
       <input class="inp" value="${esc(espLocal.vice||'')}" placeholder="${t("Seleção vice-campeã","Runner-up team")}" ${disEsp}
-        oninput="STATE.espLocal.vice=this.value"/>
+        oninput="STATE.espLocal.vice=this.value;autoSalvarEspeciais()"/>
       <label class="lbl">${t("🥇 ARTILHEIRO:","🥇 TOP SCORER:")}</label>
       <input class="inp" value="${esc(espLocal.art||'')}" placeholder="${t("Nome do artilheiro","Top scorer name")}" ${disEsp}
-        oninput="STATE.espLocal.art=this.value"/>
+        oninput="STATE.espLocal.art=this.value;autoSalvarEspeciais()"/>
       ${!bloqEsp||usuario.isAdmin?`<button class="btn" onclick="salvarEspeciais()">${t('💾 Salvar','💾 Save')}</button>`:''}
       <button class="btn2" onclick="STATE.partEspAtual=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>
     </div></div>`;
