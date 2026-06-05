@@ -859,21 +859,14 @@ async function confirmarPalpites(){
 
   if(faltando>0){
     const msg=t(
-      '⚠️ Você ainda tem '+faltando+' jogo(s) sem palpite de '+total+'!\n\nSe confirmar agora, seus palpites serão bloqueados e você não poderá mais alterar.\n\nTem certeza que quer confirmar mesmo assim?',
-      '⚠️ You still have '+faltando+' game(s) without a prediction out of '+total+'!\n\nIf you confirm now, your predictions will be locked and you won\'t be able to change them.\n\nAre you sure you want to confirm anyway?'
+      '⚠️ Você ainda tem '+faltando+' jogo(s) sem palpite de '+total+'!\n\nTem certeza que quer salvar assim?',
+      '⚠️ You still have '+faltando+' game(s) without a prediction out of '+total+'!\n\nAre you sure you want to save anyway?'
     );
     if(!window.confirm(msg)) return;
   }
 
   await salvarPalpites(true);
-  const novos=STATE.partics.map(p=>{
-    if(getNome(p).toLowerCase()!==STATE.partAtual.toLowerCase())return p;
-    const obj=typeof p==='string'?{nome:p}:{...p};
-    return{...obj,bloqueado:true};
-  });
-  STATE.partics=novos; STATE.partAtual=null;
-  await fbSet('partics',novos);
-  showToast('🔒 Palpites confirmados!');
+  showToast(t('✅ Palpites enviados!','✅ Predictions submitted!'));
 }
 
 function abrirMM(p){
