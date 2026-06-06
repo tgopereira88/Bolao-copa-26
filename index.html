@@ -948,6 +948,43 @@ async function changeCodigo(){
   showToast('🔑 Código alterado para '+novo);
 }
 
+function compartilharRankingTexto(ranking,pts){
+  const N=ranking.length;
+  const data=new Date().toLocaleDateString('pt-BR');
+  const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  let linhas=[];
+  ranking.forEach((p,i)=>{
+    const n=getNome(p);
+    const pontos=pts[n]||0;
+    const isLast=i===N-1&&N>1;
+    const isPenult=i===N-2&&N>2;
+    const isAntepenult=i===N-3&&N>3;
+    const isQuartoUltimo=i===N-4&&N>4;
+    const is4th=i===3;
+
+    const icon=i===0?'🥇':i===1?'🥈':i===2?'🥉':is4th?'🏅':isQuartoUltimo?'🐌':isAntepenult?'😴':isPenult?'🐢':isLast?'🔦':'';
+    const pos=i<3||is4th?'':((i+1)+'º');
+    const linha=icon?`${icon} ${n} — ${pontos} pts`:`${pos} ${n} — ${pontos} pts`;
+    linhas.push(linha);
+  });
+
+  const texto=
+    '🏆 *BOLÃO COPA 2026 — RANKING*\n'
+   +'📅 '+data+' • '+hora+'\n'
+   +'▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n'
+   +linhas.join('\n')+'\n'
+   +'▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n'
+   +'⚖️ Desempate: placares exatos\n'
+   +'🌐 bolao-copa-pereira.vercel.app';
+
+  if(navigator.share){
+    navigator.share({text:texto}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(texto).then(()=>showToast('📋 Ranking copiado!'));
+  }
+}
+
 function verRankingHTML(ranking,pts,exatos){
   const data=new Date().toLocaleDateString('pt-BR');
   const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -2022,8 +2059,11 @@ const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3?'4°':isLast?'🔦':isPen
         <button class="btn-whatsapp" onclick="compartilharRanking(ranking_,pts_,exatos_)" style="margin-bottom:10px">
           <span style="font-size:20px">🖼️</span> Gerar Imagem (PNG)
         </button>
-        <button class="btn-whatsapp" onclick="verRankingHTML(ranking_,pts_,exatos_)" style="background:linear-gradient(135deg,#660099,#9B30D9)">
+        <button class="btn-whatsapp" onclick="verRankingHTML(ranking_,pts_,exatos_)" style="background:linear-gradient(135deg,#660099,#9B30D9);margin-bottom:10px">
           <span style="font-size:20px">✨</span> Ver Ranking Completo
+        </button>
+        <button class="btn-whatsapp" onclick="compartilharRankingTexto(ranking_,pts_)" style="background:linear-gradient(135deg,#25D366,#128C4E)">
+          <span style="font-size:20px">💬</span> Enviar Ranking por Texto
         </button>
         <p style="font-size:11px;color:#999;margin-top:8px;text-align:center">${t("💡 \"Ver Ranking\" abre tela cheia","💡 \"View Full Ranking\" opens full screen")} ${t("— tire screenshot ou use o compartilhar do Safari para qualidade máxima","— take a screenshot or use Safari share for best quality")}</p>
       </div></div>`;
