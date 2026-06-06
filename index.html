@@ -962,7 +962,8 @@ function verRankingHTML(ranking,pts,exatos){
     const isLast=i===N-1&&N>1;
     const isPenult=i===N-2&&N>2;
     const isAntepenult=i===N-3&&N>3;
-    const is4th=i===3&&STATE.pct4lugar>0;
+    const is4th=i===3;
+    const isQuartoUltimo=i===N-4&&N>4;
 
     const sym=i===0?'🥇':i===1?'🥈':i===2?'🥉':is4th?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1)+'º';
 
@@ -971,13 +972,13 @@ function verRankingHTML(ranking,pts,exatos){
     else if(i===1){bg='#F4F4F4';border='#9AA0A6';nameC='#4A4A55';ptC='#5A6472';}
     else if(i===2){bg='#FFF0E0';border='#C87941';nameC='#7A3A10';ptC='#A0521A';}
     else if(isLast){bg='#FDECEA';border='#E53935';nameC='#B71C1C';ptC='#C62828';}
-    else if(is4th){bg='#F3E5F5';border='#9C27B0';nameC='#6A0080';ptC='#7B1FA2';}
+    else if(is4th){bg='#FFF8E0';border='#B8860B';nameC='#7A5C00';ptC='#8B6914';}
     else if(isPenult){bg='#F1F8E9';border='#7CB342';nameC='#33691E';ptC='#558B2F';}
     else if(isAntepenult){bg='#E8EAF6';border='#3949AB';nameC='#1A237E';ptC='#283593';}
     else if(i%2===0){bg='#F7F5FA';}
 
     rows+=`<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:${bg};border-left:5px solid ${border};border-radius:12px;margin-bottom:6px">
-      <div style="font-size:26px;width:36px;text-align:center;flex-shrink:0">${typeof sym==='string'&&sym.length>2?sym:sym}</div>
+      <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:${i<3?'26':'16'}px;flex-shrink:0;background:${i===0?'linear-gradient(135deg,#FFD700,#FFA500)':i===1?'linear-gradient(135deg,#C0C0C0,#909090)':i===2?'linear-gradient(135deg,#CD7F32,#8B4513)':is4th?'linear-gradient(135deg,#B8860B,#8B6914)':'transparent'};color:${i<4?'#fff':'inherit'}">${sym}</div>
       <div style="flex:1;font-size:18px;font-weight:${i<3?'800':'600'};color:${nameC};font-family:Inter,-apple-system,sans-serif">${esc(n)}</div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:22px;font-weight:800;color:${ptC};font-family:Inter,-apple-system,sans-serif;line-height:1">${pontos}</div>
