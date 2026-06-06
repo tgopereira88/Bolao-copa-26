@@ -965,7 +965,7 @@ function verRankingHTML(ranking,pts,exatos){
     const is4th=i===3;
     const isQuartoUltimo=i===N-4&&N>4;
 
-    const sym=i===0?'🥇':i===1?'🥈':i===2?'🥉':is4th?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1)+'º';
+    const sym=i===0?'🥇':i===1?'🥈':i===2?'🥉':is4th?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':isQuartoUltimo?'🐌':(i+1)+'º';
 
     let bg='transparent', border='transparent', nameC='#1A1A2E', ptC='#660099';
     if(i===0){bg='#FFF8DC';border='#F5B400';nameC='#7A5C00';ptC='#B8860B';}
@@ -975,6 +975,7 @@ function verRankingHTML(ranking,pts,exatos){
     else if(is4th){bg='#FFF8E0';border='#B8860B';nameC='#7A5C00';ptC='#8B6914';}
     else if(isPenult){bg='#F1F8E9';border='#7CB342';nameC='#33691E';ptC='#558B2F';}
     else if(isAntepenult){bg='#E8EAF6';border='#3949AB';nameC='#1A237E';ptC='#283593';}
+    else if(isQuartoUltimo){bg='#FFF8E1';border='#FF8F00';nameC='#E65100';ptC='#F57F17';}
     else if(i%2===0){bg='#F7F5FA';}
 
     rows+=`<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:${bg};border-left:5px solid ${border};border-radius:12px;margin-bottom:6px">
