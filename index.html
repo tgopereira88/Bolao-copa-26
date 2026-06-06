@@ -1108,39 +1108,43 @@ async function compartilharRanking(ranking,pts,exatos){
     const isLast=i===N-1&&N>1;
     const isPenult=i===N-2&&N>2;
     const isAntepenult=i===N-3&&N>3;
+    const is4th=i===3;
+    const isQuartoUltimo=i===N-4&&N>4;
 
     const rx=cardX+10, ry=y+3, rw=cardW-20, rh=LINHA-6;
 
     // ── FUNDO ──
     if(i===0){
-      // Ouro — gradiente dourado vibrante
       const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
       g.addColorStop(0,'#FFF3C4'); g.addColorStop(1,'#FFFDF7');
       ctx.fillStyle=g;
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(i===1){
-      // Prata
       const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
       g.addColorStop(0,'#EAEAEA'); g.addColorStop(1,'#F8F8F8');
       ctx.fillStyle=g;
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(i===2){
-      // Bronze
       const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
       g.addColorStop(0,'#FFE8CC'); g.addColorStop(1,'#FFF7EF');
       ctx.fillStyle=g;
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+    } else if(is4th){
+      const g=ctx.createLinearGradient(rx,0,rx+rw*0.5,0);
+      g.addColorStop(0,'#FFF8E0'); g.addColorStop(1,'#FFFFF0');
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(isLast){
-      // Lanterna
       ctx.fillStyle='#FDECEA';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(isPenult){
-      // Tartaruga
       ctx.fillStyle='#F1F8E9';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(isAntepenult){
-      // Dormindo
       ctx.fillStyle='#E8EAF6';
+      ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
+    } else if(isQuartoUltimo){
+      ctx.fillStyle='#FFF8E1';
       ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,12); ctx.fill();
     } else if(i%2===0){
       ctx.fillStyle='#F7F5FA';
@@ -1148,12 +1152,9 @@ async function compartilharRanking(ranking,pts,exatos){
     }
 
     // ── BARRA LATERAL ──
-    const barColors={
-      0:'#F5B400', 1:'#8C9BA5', 2:'#C87941',
-      last:'#E53935', penult:'#7CB342', antepenult:'#3949AB'
-    };
-    let barC=i===0?barColors[0]:i===1?barColors[1]:i===2?barColors[2]
-      :isLast?barColors.last:isPenult?barColors.penult:isAntepenult?barColors.antepenult:null;
+    let barC=i===0?'#F5B400':i===1?'#8C9BA5':i===2?'#C87941'
+      :is4th?'#B8860B':isLast?'#E53935':isPenult?'#7CB342'
+      :isAntepenult?'#3949AB':isQuartoUltimo?'#FF8F00':null;
     if(barC){
       ctx.fillStyle=barC;
       ctx.beginPath(); ctx.roundRect(rx,ry,5,rh,2.5); ctx.fill();
@@ -1163,7 +1164,6 @@ async function compartilharRanking(ranking,pts,exatos){
     ctx.textAlign='center';
     const medals=['🥇','🥈','🥉'];
     const specials={last:'🔦',penult:'🐢',antepenult:'😴'};
-    const isQuartoUltimo=i===N-4&&N>4;
     const sym=i<3?medals[i]:is4th?'4°':isLast?specials.last:isPenult?specials.penult:isAntepenult?specials.antepenult:isQuartoUltimo?'🐌':null;
     if(sym){
       ctx.font=(LINHA>60?'32':'26')+'px Arial';
