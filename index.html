@@ -962,16 +962,18 @@ function verRankingHTML(ranking,pts,exatos){
     const isLast=i===N-1&&N>1;
     const isPenult=i===N-2&&N>2;
     const isAntepenult=i===N-3&&N>3;
+    const is4th=i===3&&STATE.pct4lugar>0;
 
-    const sym=i===0?'🥇':i===1?'🥈':i===2?'🥉':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1)+'º';
+    const sym=i===0?'🥇':i===1?'🥈':i===2?'🥉':is4th?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'🐌':(i+1)+'º';
 
     let bg='transparent', border='transparent', nameC='#1A1A2E', ptC='#660099';
     if(i===0){bg='#FFF8DC';border='#F5B400';nameC='#7A5C00';ptC='#B8860B';}
     else if(i===1){bg='#F4F4F4';border='#9AA0A6';nameC='#4A4A55';ptC='#5A6472';}
     else if(i===2){bg='#FFF0E0';border='#C87941';nameC='#7A3A10';ptC='#A0521A';}
     else if(isLast){bg='#FDECEA';border='#E53935';nameC='#B71C1C';ptC='#C62828';}
+    else if(is4th){bg='#F3E5F5';border='#9C27B0';nameC='#6A0080';ptC='#7B1FA2';}
     else if(isPenult){bg='#F1F8E9';border='#7CB342';nameC='#33691E';ptC='#558B2F';}
-    else if(isAntepenult){bg='#E8EAF6';border='#3949AB';nameC='#1A237E';ptC='#283593';}
+    else if(isAntepenult){bg='#FFF8E1';border='#FF8F00';nameC='#E65100';ptC='#F57F17';}
     else if(i%2===0){bg='#F7F5FA';}
 
     rows+=`<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:${bg};border-left:5px solid ${border};border-radius:12px;margin-bottom:6px">
@@ -1158,8 +1160,8 @@ async function compartilharRanking(ranking,pts,exatos){
     // ── MEDALHA / POSIÇÃO ──
     ctx.textAlign='center';
     const medals=['🥇','🥈','🥉'];
-    const specials={last:'🔦',penult:'🐢',antepenult:'😴'};
-    const sym=i<3?medals[i]:isLast?specials.last:isPenult?specials.penult:isAntepenult?specials.antepenult:null;
+    const specials={last:'🔦',penult:'🐢',antepenult:'🐌'};
+    const sym=i<3?medals[i]:is4th?'4°':isLast?specials.last:isPenult?specials.penult:isAntepenult?specials.antepenult:null;
     if(sym){
       ctx.font=(LINHA>60?'32':'26')+'px Arial';
       ctx.fillText(sym, rx+34, cy+1);
@@ -1704,7 +1706,7 @@ function render(){
         const completo=qg>=totalJogos;
         const statusGrupo=qg===0?t('⏳ Sem palpites','⏳ No predictions'):completo?t('✅ Grupos completo','✅ Groups complete'):'✏️ '+qg+' de '+totalJogos+' palpites';
         const statusMM=qm>0?'⚔️ '+qm+' MM':'';
-        const statusEsp=e.camp?'🏆 '+esc(e.camp):'';
+        const statusEsp=usuario.isAdmin&&e.camp?'🏆 '+esc(e.camp):'';
         const partes=[statusGrupo,statusMM,statusEsp].filter(Boolean);
         const codigoAtual=codigos&&Object.keys(codigos).find(k=>k.toLowerCase()===n.toLowerCase());
         const codigoValor=codigoAtual?codigos[codigoAtual]:'';
@@ -1981,7 +1983,7 @@ function render(){
       const isAntepenult=i===ranking.length-3&&ranking.length>3;
       const is4th=i===3&&STATE.pct4lugar>0;
       const cls=i===0?'g':i===1?'s':i===2?'b':i===3&&STATE.pct4lugar>0?'q':isLast?'last':'n';
-      const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3&&STATE.pct4lugar>0?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'😴':(i+1);
+      const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3&&STATE.pct4lugar>0?'4°':isLast?'🔦':isPenult?'🐢':isAntepenult?'🐌':(i+1);
       const e=especiais[n]||{};
       const extraStyle='';
       html+=`<div class="rk-item" style="${extraStyle}">
