@@ -1164,14 +1164,27 @@ async function compartilharRanking(ranking,pts,exatos){
     ctx.textAlign='center';
     const medals=['🥇','🥈','🥉'];
     const specials={last:'🔦',penult:'🐢',antepenult:'😴'};
-    const sym=i<3?medals[i]:is4th?'4°':isLast?specials.last:isPenult?specials.penult:isAntepenult?specials.antepenult:isQuartoUltimo?'🐌':null;
-    if(sym){
+    const sym=i<3?medals[i]:isLast?specials.last:isPenult?specials.penult:isAntepenult?specials.antepenult:isQuartoUltimo?'🐌':null;
+    const circR=LINHA>60?18:15;
+    const circX=rx+34, circY=cy;
+
+    if(i<3||is4th){
+      // Círculo colorido com número/texto
+      const circColor=i===0?['#FFD700','#FFA500']:i===1?['#C0C0C0','#909090']:i===2?['#CD7F32','#8B4513']:['#B8860B','#8B6914'];
+      const cg=ctx.createLinearGradient(circX-circR,circY-circR,circX+circR,circY+circR);
+      cg.addColorStop(0,circColor[0]); cg.addColorStop(1,circColor[1]);
+      ctx.fillStyle=cg;
+      ctx.beginPath(); ctx.arc(circX,circY,circR,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#FFFFFF';
+      ctx.font='700 '+(LINHA>60?16:13)+'px Inter,Arial';
+      ctx.fillText(i<3?(i+1)+'°':'4°', circX, circY+1);
+    } else if(sym){
       ctx.font=(LINHA>60?'32':'26')+'px Arial';
-      ctx.fillText(sym, rx+34, cy+1);
+      ctx.fillText(sym, circX, circY+1);
     } else {
       ctx.fillStyle='#B0B0C0';
       ctx.font='700 '+(LINHA>60?'18':'15')+'px Inter,Arial';
-      ctx.fillText((i+1)+'º', rx+34, cy);
+      ctx.fillText((i+1)+'º', circX, circY);
     }
 
     // ── NOME ──
@@ -1181,16 +1194,16 @@ async function compartilharRanking(ranking,pts,exatos){
       last:'#B71C1C',penult:'#33691E',antepenult:'#1A237E',def:'#1A1A2E'
     };
     ctx.fillStyle=i===0?nameColors[0]:i===1?nameColors[1]:i===2?nameColors[2]
-      :isLast?nameColors.last:isPenult?nameColors.penult:isAntepenult?nameColors.antepenult:nameColors.def;
+      :is4th?'#7A5C00':isLast?nameColors.last:isPenult?nameColors.penult:isAntepenult?nameColors.antepenult:nameColors.def;
     const fs=LINHA>70?24:LINHA>60?21:LINHA>50?19:17;
-    ctx.font=(i<3?'800':'600')+' '+fs+'px Inter,Arial';
+    ctx.font=(i<4?'800':'600')+' '+fs+'px Inter,Arial';
     const nameMax=n.length>22?n.substring(0,21)+'…':n;
     ctx.fillText(nameMax, rx+64, cy);
 
     // ── PONTOS ──
     ctx.textAlign='right';
     const ptC=i===0?'#C8960A':i===1?'#5A6472':i===2?'#A0521A'
-      :isLast?'#C62828':isPenult?'#558B2F':isAntepenult?'#283593':'#5C0099';
+      :is4th?'#8B6914':isLast?'#C62828':isPenult?'#558B2F':isAntepenult?'#283593':'#5C0099';
     ctx.fillStyle=ptC;
     ctx.font='800 '+(LINHA>60?22:19)+'px Inter,Arial';
     ctx.fillText(pontos, rx+rw-88, cy-5);
