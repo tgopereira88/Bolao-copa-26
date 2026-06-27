@@ -441,23 +441,30 @@ function calcClassif(grupoLetra, posIdx, resultados) {
   if (!g) return null;
   const pts = {}; g.t.forEach(t => { pts[t]={p:0,sg:0,gm:0}; });
   const jogos = JOGOS_GRUPO.filter(j => j.grupo === grupoLetra);
-  let jogou = false;
+  let completos = 0;
   jogos.forEach(j => {
     const r = resultados[j.id];
     if (!r||r.g1===''||r.g2==='') return;
-    jogou = true;
+    completos++;
     const g1=+r.g1,g2=+r.g2;
     pts[j.t1].gm+=g1; pts[j.t2].gm+=g2;
     pts[j.t1].sg+=g1-g2; pts[j.t2].sg+=g2-g1;
     if(g1>g2)pts[j.t1].p+=3; else if(g1<g2)pts[j.t2].p+=3; else{pts[j.t1].p++;pts[j.t2].p++;}
   });
-  if (!jogou) return null;
+  if (completos < jogos.length) return null;
   const rank = g.t.slice().sort((a,b)=>{const A=pts[a],B=pts[b];return B.p-A.p||B.sg-A.sg||B.gm-A.gm||a.localeCompare(b);});
   return rank[posIdx]||null;
 }
 function calcMelhorTerceiro(grupasStr, resultados) {
+  const letras = grupasStr.split('');
+  // Só resolve quando TODOS os grupos do slot estiverem completos
+  for(const l of letras){
+    const jogos = JOGOS_GRUPO.filter(j=>j.grupo===l);
+    const completos = jogos.filter(j=>{const r=resultados[j.id];return r&&r.g1!==''&&r.g2!=='';}).length;
+    if(completos < jogos.length) return null;
+  }
   let melhor=null,melhorScore={p:-1,sg:-999};
-  grupasStr.split('').forEach(l => {
+  letras.forEach(l => {
     const t=calcClassif(l,2,resultados); if(!t)return;
     const g=GRUPOS.find(x=>x.l===l),pts={};
     g.t.forEach(tm=>{pts[tm]={p:0,sg:0,gm:0};});
@@ -476,8 +483,9 @@ function resolveTime(key,resultados){
   if(!key)return null;
   if(key.startsWith('W:'))return getVencedor(key.slice(2),resultados);
   if(key.startsWith('L:'))return getPerdedor(key.slice(2),resultados);
+  if(key.startsWith('3')) return STATE.mmTerceiros[key]||null;
   const pos=parseInt(key[0]),grupos=key.slice(1);
-  return pos<=2?calcClassif(grupos,pos-1,resultados):calcMelhorTerceiro(grupos,resultados);
+  return pos<=2?calcClassif(grupos,pos-1,resultados):null;
 }
 function getVencedor(id,resultados){
   const r=resultados[id],j=JOGOS_MM.find(x=>x.id===id);
@@ -544,7 +552,10 @@ let STATE = {
   partics:[], palpites:{}, especiais:{}, resultados:{}, resEsp:{},
   regras:{...DEFAULT_REGRAS}, codigo:CODIGO_DEFAULT,
   codigos:{}, // código individual por participante
-  mmAberto:false, // mata-mata habilitado globalmente pelo admin
+  mmAberto:false,
+  terceirosClassif:[],
+  mmTerceiros:{},    // {t2k_ou_t1k: 'Nome do time 🏳️'} — terceiros configurados pelo admin
+  mmBloqJogos:{},   // {id_jogo: true} — jogos bloqueados individualmente pelo admin
   historico:{}, // {nome: [{data, pts, total}]}
   acessos:{}, // {nome: isoTimestamp}
   valorPartic:20, // valor por participante
@@ -576,7 +587,7 @@ async function fbSet(key,val){
 async function carregarTudo(){
   const [p,pal,esp,res,re,reg,cod,cods,fotos,mmab,vp,prems,pct1,pct2,pct3,pct4,acs] = await Promise.all([
     fbGet('partics'),fbGet('palpites'),fbGet('especiais'),
-    fbGet('resultados'),fbGet('resesp'),fbGet('regras'),fbGet('codigo'),fbGet('codigos'),fbGet('fotos'),fbGet('mmAberto'),fbGet('valorPartic'),fbGet('acessos'),fbGet('premios'),fbGet('pct1lugar'),fbGet('pct2lugar'),fbGet('pct3lugar'),fbGet('pct4lugar'),
+    fbGet('resultados'),fbGet('resesp'),fbGet('regras'),fbGet('codigo'),fbGet('codigos'),fbGet('fotos'),fbGet('mmAberto'),fbGet('valorPartic'),fbGet('acessos'),fbGet('premios'),fbGet('pct1lugar'),fbGet('pct2lugar'),fbGet('pct3lugar'),fbGet('pct4lugar'),fbGet('terceirosClassif'),fbGet('mmTerceiros'),fbGet('mmBloqJogos'),
   ]);
   let particsList = p || [];
   let changed = false;
@@ -596,6 +607,12 @@ async function carregarTudo(){
   if(cods) STATE.codigos=cods;
   if(fotos) STATE.fotos=fotos;
   if(mmab!==null&&mmab!==undefined) STATE.mmAberto=mmab;
+  const terc=results[results.length-3];
+  if(Array.isArray(terc)) STATE.terceirosClassif=terc;
+  const mmTerc=results[results.length-2];
+  if(mmTerc&&typeof mmTerc==='object') STATE.mmTerceiros=mmTerc;
+  const mmBloq=results[results.length-1];
+  if(mmBloq&&typeof mmBloq==='object') STATE.mmBloqJogos=mmBloq;
   if(vp!==null&&vp!==undefined) STATE.valorPartic=vp;
   if(prems) STATE.premios=prems;
   if(pct1!==null&&pct1!==undefined) STATE.pct1lugar=pct1;
@@ -826,6 +843,114 @@ function toggleDarkMode(){
   document.documentElement.setAttribute('data-dark', STATE.darkMode?'1':'0');
   localStorage.setItem('bolao_dark', STATE.darkMode?'1':'0');
   render();
+}
+
+async function setTerceiro(key, time){
+  STATE.mmTerceiros[key] = time||null;
+  if(!time) delete STATE.mmTerceiros[key];
+  await fbSet('mmTerceiros', STATE.mmTerceiros);
+  render();
+}
+async function toggleBloqJogoMM(id){
+  STATE.mmBloqJogos[id] = !STATE.mmBloqJogos[id];
+  await fbSet('mmBloqJogos', STATE.mmBloqJogos);
+  render();
+}
+function jogoMMBloqueado(id){
+  return !!STATE.mmBloqJogos[id];
+}
+async function toggleTerceiro(letra){
+  const idx=STATE.terceirosClassif.indexOf(letra);
+  if(idx>=0) STATE.terceirosClassif.splice(idx,1);
+  else if(STATE.terceirosClassif.length<8) STATE.terceirosClassif.push(letra);
+  render();
+}
+async function salvarTerceiros(){
+  await fbSet('terceirosClassif',STATE.terceirosClassif);
+  showToast('✅ Terceiros salvos!');
+}
+
+// Tabela Annex C: chave = 8 letras ordenadas, valor = [t1A,t1B,t1D,t1E,t1G,t1I,t1K,t1L]
+const ANNEX_C={
+  "EFGHIJKL":["E","J","I","F","H","G","L","K"],
+  "DFGHIJKL":["H","G","I","D","J","F","L","K"],
+  "DEGHIJKL":["E","J","I","D","H","G","L","K"],
+  "DEFHIJKL":["E","J","I","D","H","F","L","K"],
+  "DEFGIJKL":["E","G","I","D","J","F","L","K"],
+  "DEFGHJKL":["E","G","J","D","H","F","L","K"],
+  "DEFGHIKL":["E","G","I","D","H","F","L","K"],
+  "DEFGHIJL":["E","G","J","D","H","F","L","I"],
+  "DEFGHIJK":["E","G","J","D","H","F","I","K"],
+  "CFGHIJKL":["H","G","I","C","J","F","L","K"],
+  "CEGHIJKL":["E","J","I","C","H","G","L","K"],
+  "CEFHIJKL":["E","J","I","C","H","F","L","K"],
+  "CEFGIJKL":["E","G","I","C","J","F","L","K"],
+  "CEFGHJKL":["E","G","J","C","H","F","L","K"],
+  "CEFGHIKL":["E","G","I","C","H","F","L","K"],
+  "CEFGHIJL":["E","G","J","C","H","F","L","I"],
+  "CEFGHIJK":["E","G","J","C","H","F","I","K"],
+  "CDGHIJKL":["H","G","I","C","J","D","L","K"],
+  "CDFHIJKL":["C","J","I","D","H","F","L","K"],
+  "CDFGIJKL":["C","G","I","D","J","F","L","K"],
+  "CDFGHJKL":["C","G","J","D","H","F","L","K"],
+  "CDFGHIKL":["C","G","I","D","H","F","L","K"],
+  "CDFGHIJL":["C","G","J","D","H","F","L","I"],
+  "CDFGHIJK":["C","G","J","D","H","F","I","K"],
+  "CDEHIJKL":["E","J","I","C","H","D","L","K"],
+  "CDEGIJKL":["E","G","I","C","J","D","L","K"],
+  "CDEGHJKL":["E","G","J","C","H","D","L","K"],
+  "CDEGHIKL":["E","G","I","C","H","D","L","K"],
+  "CDEGHIJL":["E","G","J","C","H","D","L","I"],
+  "CDEGHIJK":["E","G","J","C","H","D","I","K"],
+  "CDEFIJKL":["C","J","E","D","I","F","L","K"],
+  "CDEFHJKL":["C","J","E","D","H","F","L","K"],
+  "CDEFHIKL":["C","E","I","D","H","F","L","K"],
+  "CDEFHIJL":["C","J","E","D","H","F","L","I"],
+  "CDEFHIJK":["C","J","E","D","H","F","I","K"],
+  "CDEFGJKL":["C","G","E","D","J","F","L","K"],
+  "CDEFGIKL":["C","G","E","D","I","F","L","K"],
+  "CDEFGIJL":["C","G","E","D","J","F","L","I"],
+  "CDEFGIJK":["C","G","E","D","J","F","I","K"],
+  "CDEFGHKL":["C","G","E","D","H","F","L","K"],
+  "CDEFGHJL":["C","G","J","D","H","F","L","E"],
+  "CDEFGHJK":["C","G","J","D","H","F","E","K"],
+  "CDEFGHIL":["C","G","E","D","H","F","L","I"],
+  "CDEFGHIK":["C","G","E","D","H","F","I","K"],
+  "CDEFGHIJ":["C","G","J","D","H","F","E","I"],
+};
+
+// Resolve qual terceiro vai para qual slot do bracket
+// slots: [t1A,t1B,t1D,t1E,t1G,t1I,t1K,t1L]
+function getTerceirosSlots(){
+  const t=STATE.terceirosClassif;
+  if(!t||t.length!==8) return null;
+  const key=[...t].sort().join('');
+  const slots=ANNEX_C[key];
+  if(!slots) return null;
+  // Monta mapa: qual terceiro enfrenta qual vencedor de grupo
+  // Ordem: [1A,1B,1D,1E,1G,1I,1K,1L]
+  const vencedores=['A','B','D','E','G','I','K','L'];
+  const mapa={};
+  vencedores.forEach((v,i)=>{ mapa['1'+v]='3'+slots[i]; });
+  return mapa;
+}
+
+function resolveTerceiro(key){
+  // key ex: '3ABCDF' — retorna o time do terceiro classificado para este slot
+  const mapa=getTerceirosSlots();
+  if(!mapa) return null;
+  // Encontra qual jogo usa este grupo de terceiros
+  // Descobre qual vencedor enfrenta este slot
+  const slotGrupos=key.slice(1); // ex: 'ABCDF'
+  // Procura no mapa qual terceiro foi alocado ao vencedor que enfrenta este slot
+  const jogo=JOGOS_MM.find(j=>j.t2k===key||j.t1k===key);
+  if(!jogo) return null;
+  const vencKey=jogo.t1k===key?jogo.t2k:jogo.t1k; // ex: '1E'
+  const tercLetra=mapa[vencKey]; // ex: '3C'
+  if(!tercLetra) return null;
+  // Retorna o time do grupo terceiro letra
+  const grupo=tercLetra.slice(1);
+  return calcClassif(grupo,2,STATE.resultados);
 }
 
 async function toggleMMAbertoGlobal(){
@@ -1820,6 +1945,30 @@ function render(){
         </button>
         <div class="aviso" style="margin-top:10px">Status atual: <strong>${mmHabilitado()?'✅ Habilitado':'❌ Desabilitado'}</strong></div>
       </div></div>`;
+
+      // Card: configurar 8 terceiros classificados
+      const GRUPOS_LETRAS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+      const tercAtuais = STATE.terceirosClassif || [];
+      const tercSet = new Set(tercAtuais);
+      html+=`<div class="card"><div class="ct">🥉 Terceiros Classificados</div><div class="cb">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Selecione os 8 grupos cujos terceiros se classificaram para o mata-mata. O bracket será montado automaticamente.</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+          ${GRUPOS_LETRAS.map(l=>`
+            <button onclick="toggleTerceiro('${l}')" style="
+              padding:10px 0;border-radius:8px;border:2px solid ${tercSet.has(l)?'#660099':'#ccc'};
+              background:${tercSet.has(l)?'#660099':'transparent'};
+              color:${tercSet.has(l)?'#fff':'var(--text)'};
+              font-weight:700;font-size:16px;cursor:pointer">
+              ${l}
+            </button>`).join('')}
+        </div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:10px">
+          Selecionados: <strong>${tercAtuais.length}/8</strong>
+          ${tercAtuais.length===8?` → ${tercAtuais.sort().join(', ')}`:''}
+        </div>
+        ${tercAtuais.length===8?`<button class="btn" onclick="salvarTerceiros()">💾 Salvar Terceiros</button>`:`<div class="aviso">Selecione exatamente 8 grupos.</div>`}
+      </div></div>`;
+
       html+=`<div class="aviso">💡 Dados salvos na nuvem ☁️ — qualquer pessoa acessa de qualquer celular!</div>`;
     }
   }
@@ -2011,7 +2160,12 @@ function render(){
       html+=`<div class="mm-fase-tit">${FASES_LABEL[fase]}</div>`;
       JOGOS_MM.filter(j=>j.fase===fase).forEach(j=>{
         const t1=resolveTime(j.t1k,resultados),t2=resolveTime(j.t2k,resultados);
-        html+=jogoCardHTML({...j,t1:t1||'A definir',t2:t2||'A definir'},palpitesMMLocal[j.id],!t1||!t2,'changeMM');
+        const bloqJogo=jogoMMBloqueado(j.id);
+        const disabled=!t1||!t2||(bloqJogo&&!usuario.isAdmin);
+        html+=jogoCardHTML({...j,t1:t1||'A definir',t2:t2||'A definir'},palpitesMMLocal[j.id],disabled,'changeMM');
+        if(bloqJogo&&!usuario.isAdmin){
+          html+=`<div style="font-size:11px;color:#999;text-align:center;margin:-8px 0 8px">🔒 Palpite encerrado</div>`;
+        }
       });
     });
     html+=`<div style="display:flex;gap:8px;margin-top:6px">
@@ -2090,16 +2244,44 @@ const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':isLast?'🔦':isPenult?'🐢':i
       });
       html+=`</div></div></div>`;
 
+      // Build sorted list of all teams from GRUPOS for dropdown
+      const todasSelecoes = GRUPOS.flatMap(g=>g.t).sort((a,b)=>a.localeCompare(b));
+
+      html+=`<div class="card"><div class="ct">🥉 Terceiros Classificados (Admin)</div><div class="cb">
+        <div class="aviso" style="margin-bottom:12px">Selecione qual seleção ocupa cada vaga de 3º colocado no bracket. A bandeira aparece automaticamente para todos.</div>`;
+      JOGOS_MM.filter(j=>j.t1k.startsWith('3')||j.t2k.startsWith('3')).forEach(j=>{
+        const isTk1=j.t1k.startsWith('3');
+        const chave=isTk1?j.t1k:j.t2k;
+        const outro=resolveTime(isTk1?j.t2k:j.t1k,resultados)||j[isTk1?'t2k':'t1k'];
+        const atual=STATE.mmTerceiros[chave]||'';
+        html+=`<div style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:#660099;margin-bottom:4px">${j.data} — vaga ${chave}</div>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Enfrenta: ${nomeCurto(outro)}</div>
+          <select style="width:100%;padding:8px;border-radius:8px;border:1.5px solid #ccc;font-size:14px"
+            onchange="setTerceiro('${chave}',this.value)">
+            <option value="">— Selecionar seleção —</option>
+            ${todasSelecoes.map(s=>`<option value="${esc(s)}" ${atual===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>`;
+      });
+      html+=`</div></div>`;
+
       html+=`<div class="card"><div class="ct">⚔️ Resultados Reais — Mata-Mata (Admin)</div><div class="cb">
-      <div class="aviso" style="margin-bottom:12px">⚠️ Digite o placar do <strong>tempo normal</strong>. Se houver empate, selecione o classificado (prorrogação/pênaltis). A pontuação usa só o tempo normal.</div>`;
+      <div class="aviso" style="margin-bottom:12px">⚠️ Digite o placar do <strong>tempo normal</strong>. Se empate, selecione o classificado. Use 🔒 para bloquear palpites de cada jogo.</div>`;
       FASES_MM.forEach(fase=>{
         html+=`<div style="font-size:12px;font-weight:700;color:#007AFF;margin:14px 0 6px">${FASES_LABEL[fase]}</div>`;
         JOGOS_MM.filter(j=>j.fase===fase).forEach(j=>{
           const t1=resolveTime(j.t1k,resultados)||j.t1k;
           const t2=resolveTime(j.t2k,resultados)||j.t2k;
           const r=resultados[j.id]||{g1:'',g2:'',pen:''};
+          const bloq=jogoMMBloqueado(j.id);
           html+=`<div class="res-row">
-            <div class="res-row-tit">${j.data} · ${nomeCurto(t1)} × ${nomeCurto(t2)}</div>
+            <div class="res-row-tit" style="display:flex;justify-content:space-between;align-items:center">
+              <span>${j.data} · ${nomeCurto(t1)} × ${nomeCurto(t2)}</span>
+              <button onclick="toggleBloqJogoMM('${j.id}')" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid ${bloq?'#E53935':'#ccc'};background:${bloq?'#FDECEA':'#f5f5f5'};color:${bloq?'#E53935':'#555'};cursor:pointer">
+                ${bloq?'🔒 Bloqueado':'🔓 Aberto'}
+              </button>
+            </div>
             <div class="res-row-body">
               <span class="res-time">${nomeCurto(t1)}</span>
               <input class="res-inp" type="number" min="0" max="30" value="${r.g1}"
