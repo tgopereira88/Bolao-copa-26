@@ -585,7 +585,7 @@ async function fbSet(key,val){
 }
 
 async function carregarTudo(){
-  const [p,pal,esp,res,re,reg,cod,cods,fotos,mmab,vp,prems,pct1,pct2,pct3,pct4,acs] = await Promise.all([
+  const [p,pal,esp,res,re,reg,cod,cods,fotos,mmab,vp,acs,prems,pct1,pct2,pct3,pct4,terc,mmTerc,mmBloq] = await Promise.all([
     fbGet('partics'),fbGet('palpites'),fbGet('especiais'),
     fbGet('resultados'),fbGet('resesp'),fbGet('regras'),fbGet('codigo'),fbGet('codigos'),fbGet('fotos'),fbGet('mmAberto'),fbGet('valorPartic'),fbGet('acessos'),fbGet('premios'),fbGet('pct1lugar'),fbGet('pct2lugar'),fbGet('pct3lugar'),fbGet('pct4lugar'),fbGet('terceirosClassif'),fbGet('mmTerceiros'),fbGet('mmBloqJogos'),
   ]);
@@ -607,11 +607,8 @@ async function carregarTudo(){
   if(cods) STATE.codigos=cods;
   if(fotos) STATE.fotos=fotos;
   if(mmab!==null&&mmab!==undefined) STATE.mmAberto=mmab;
-  const terc=results[results.length-3];
   if(Array.isArray(terc)) STATE.terceirosClassif=terc;
-  const mmTerc=results[results.length-2];
   if(mmTerc&&typeof mmTerc==='object') STATE.mmTerceiros=mmTerc;
-  const mmBloq=results[results.length-1];
   if(mmBloq&&typeof mmBloq==='object') STATE.mmBloqJogos=mmBloq;
   if(vp!==null&&vp!==undefined) STATE.valorPartic=vp;
   if(prems) STATE.premios=prems;
@@ -1674,24 +1671,13 @@ function exportarTodosMataM(){
 }
 
 function exportarPalpitesDia(dataStr){
-  // dataStr ex: "11/jun"
   const resultados=STATE.resultados||{};
   const partics=STATE.partics||[];
-
-  // Find all games on this date (excluding early morning "madrugada" games which belong to prior day)
-  const jogosDia=JOGOS_GRUPO.filter(j=>{
-    const d=j.data.split(' ')[0];
-    return d===dataStr;
-  });
-
-  if(!jogosDia.length){
-    showToast('Nenhum jogo encontrado para '+dataStr);
-    return;
-  }
-
-  // Sort by time
-  const horaNum=h=>{ const p=h.split(':'); return parseInt(p[0])*60+(parseInt(p[1])||0); };
-  jogosDia.sort((a,b)=>horaNum(a.data.split(' ')[1]||'0')-horaNum(b.data.split(' ')[1]||'0'));
+  const todosJogos=[...JOGOS_GRUPO,...JOGOS_MM];
+  const jogosDia=todosJogos.filter(j=>j.data.split(' ')[0]===dataStr);
+  if(!jogosDia.length){ showToast('Nenhum jogo encontrado para '+dataStr); return; }
+  const horaNum=h=>{ const p=(h||'0').split(':'); return parseInt(p[0])*60+(parseInt(p[1])||0); };
+  jogosDia.sort((a,b)=>horaNum(a.data.split(' ')[1])-horaNum(b.data.split(' ')[1]));
 
   let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <style>
@@ -1713,16 +1699,18 @@ function exportarPalpitesDia(dataStr){
 
   jogosDia.forEach(j=>{
     const hora=j.data.split(' ')[1]||'';
-    const n1=j.t1.replace(/\s\S+$/,'');
-    const n2=j.t2.replace(/\s\S+$/,'');
-    html+=`<h2>${j.t1} × ${j.t2} (${hora})</h2>`;
+    const isMM=!!j.fase;
+    const t1raw=isMM?(resolveTime(j.t1k,resultados)||j.t1k):j.t1;
+    const t2raw=isMM?(resolveTime(j.t2k,resultados)||j.t2k):j.t2;
+    const faseLabel=isMM?` — ${FASES_LABEL[j.fase]||j.fase}`:'';
+    html+=`<h2>${t1raw} × ${t2raw} (${hora})${faseLabel}</h2>`;
     html+=`<table><tr><th>Participante</th><th style="text-align:center">Placar</th></tr>`;
 
     const placares={};
     partics.forEach(p=>{
       const nome=getNome(p);
-      const pal=STATE.palpites[nome]||{};
-      const v=pal[j.id];
+      const palBase=isMM?(STATE.palpites[nome+'_mm']||{}):(STATE.palpites[nome]||{});
+      const v=palBase[j.id];
       const pl=(v&&v.g1!==''&&v.g2!=='')?v.g1+'×'+v.g2:null;
       if(pl) placares[pl]=(placares[pl]||0)+1;
       html+=`<tr><td>${nome}</td><td class="${pl?'pl':'vazio'}">${pl||'—'}</td></tr>`;
@@ -1739,10 +1727,10 @@ function exportarPalpitesDia(dataStr){
 }
 
 function exportarPalpitesDiaUI(){
-  // Get unique dates from JOGOS_GRUPO
-  const datas=[...new Set(JOGOS_GRUPO.map(j=>j.data.split(' ')[0]))].sort((a,b)=>{
+  const todosJogos=[...JOGOS_GRUPO,...JOGOS_MM];
+  const datas=[...new Set(todosJogos.map(j=>j.data.split(' ')[0]))].sort((a,b)=>{
     const [da,ma]=a.split('/'); const [db,mb]=b.split('/');
-    const meses={'jan':1,'fev':2,'mar':3,'abr':4,'mai':5,'jun':6,'jul':7,'ago':8,'set':9,'out':10,'nov':11,'dez':12};
+    const meses={'jan':1,'fev':2,'mar':3,'abr':4,'mai':5,'jun':6,'jul':7,'ago':8};
     return (meses[ma]||0)*31+parseInt(da) - ((meses[mb]||0)*31+parseInt(db));
   });
   const hoje=new Date();
@@ -2052,11 +2040,15 @@ function render(){
         // Conta só palpites realmente preenchidos (g1 e g2 não vazios)
         const palN=palpites[n]||{};
         const qg=Object.values(palN).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length;
-        const qm=palpites[n+'_mm']?Object.values(palpites[n+'_mm']).filter(v=>v&&v.g1!==null&&v.g1!==undefined&&String(v.g1).trim()!==''&&v.g2!==null&&v.g2!==undefined&&String(v.g2).trim()!=='').length:0;
+        const palMM=palpites[n+'_mm']||{};
+        // Jogos MM liberados (aberto globalmente E não bloqueados individualmente)
+        const jogosMMLib=JOGOS_MM.filter(j=>!jogoMMBloqueado(j.id)&&resolveTime(j.t1k,STATE.resultados)&&resolveTime(j.t2k,STATE.resultados));
+        const totalMMLib=jogosMMLib.length;
+        const qm=jogosMMLib.filter(j=>{const v=palMM[j.id];return v&&String(v.g1).trim()!==''&&String(v.g2).trim()!=='';}).length;
         const totalJogos=JOGOS_GRUPO.length;
         const completo=qg>=totalJogos;
         const statusGrupo=qg===0?t('⏳ Sem palpites','⏳ No predictions'):completo?t('✅ Grupos completo','✅ Groups complete'):'✏️ '+qg+' de '+totalJogos+' palpites';
-        const statusMM=qm>0?'⚔️ '+qm+' MM':'';
+        const statusMM=totalMMLib>0?(qm>=totalMMLib?'✅ MM completo':'⚔️ MM: '+qm+'/'+totalMMLib):'';
         const statusEsp=usuario.isAdmin&&e.camp?'🏆 '+esc(e.camp):'';
         const partes=[statusGrupo,statusMM,statusEsp].filter(Boolean);
         const codigoAtual=codigos&&Object.keys(codigos).find(k=>k.toLowerCase()===n.toLowerCase());
