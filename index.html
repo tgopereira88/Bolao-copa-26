@@ -530,8 +530,8 @@ function calcularPontos(partics,palpites,especiais,resultados,resEsp,regras){
       const rg1=+r.g1,rg2=+r.g2,pg1=+pp.g1,pg2=+pp.g2;
       const rv=rg1>rg2?1:rg1<rg2?-1:0,pv=pg1>pg2?1:pg1<pg2?-1:0;
       if(pg1===rg1&&pg2===rg2){pts[n]+=R.r_mmexato;exatos[n]++;}
-      else if(rv===pv&&rv!==0)pts[n]+=R.r_mmvenc;
-      // Empate no tempo normal: ninguém ganha ponto de vencedor (pênaltis não contam para pontuação)
+      else if(rv===pv&&(rv!==0||j.id==='final'))pts[n]+=R.r_mmvenc;
+      // Empate no tempo normal só pontua como acerto na FINAL; nos demais jogos MM ninguém ganha ponto de vencedor
     });
     const espNomes=Object.keys(especiais);
     const espMatch=espNomes.find(k=>k.toLowerCase()===nLow)||n;
@@ -1584,6 +1584,108 @@ function exportarMataM(nome){
   abrirOverlayImpressao(nome,'⚔️ Mata-Mata — '+nome, html);
 }
 
+function exportarFasePNG(){
+  // Show phase selector overlay
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+  const faseOpts = FASES_MM.map(f=>`<button onclick="gerarPNGFase('${f}',this.closest('.fase-sel-box'))" style="width:100%;padding:12px;margin-bottom:8px;border:none;border-radius:10px;background:#660099;color:#fff;font-size:15px;font-weight:700;cursor:pointer">${FASES_LABEL[f]}</button>`).join('');
+  overlay.innerHTML=`<div class="fase-sel-box" style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+    <div style="font-size:16px;font-weight:800;color:#330066;margin-bottom:16px">📸 Selecione a fase</div>
+    ${faseOpts}
+    <button onclick="this.closest('div').parentElement.remove()" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;background:#f5f5f5;font-size:14px;cursor:pointer;margin-top:4px">Cancelar</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function gerarPNGFase(fase, box){
+  box.parentElement.remove();
+  const nome = STATE.partMMAtual;
+  const resultados = STATE.resultados||{};
+  const palpitesMM = (STATE.palpites[nome+'_mm'])||{};
+  const jogos = JOGOS_MM.filter(j=>j.fase===fase);
+  const faseLabel = FASES_LABEL[fase];
+
+  const SCALE=2, W=680, LINHA=70, TOP=120, PAD=28;
+  const H = TOP + jogos.length*LINHA + 60;
+  const canvas = document.createElement('canvas');
+  canvas.width=W*SCALE; canvas.height=H*SCALE;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE,SCALE);
+  ctx.textBaseline='middle';
+
+  // Header
+  const hg=ctx.createLinearGradient(0,0,W,TOP);
+  hg.addColorStop(0,'#2D004F'); hg.addColorStop(1,'#660099');
+  ctx.fillStyle=hg; ctx.fillRect(0,0,W,TOP);
+  ctx.fillStyle='#fff';
+  ctx.font='700 13px Inter,Arial'; ctx.textAlign='center';
+  ctx.fillText('BOLÃO COPA 2026 — '+faseLabel.toUpperCase(), W/2, 28);
+  ctx.font='900 28px Inter,Arial';
+  ctx.fillText('⚔️ '+nome, W/2, 62);
+  ctx.font='500 12px Inter,Arial';
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  const now=new Date();
+  ctx.fillText(now.toLocaleDateString('pt-BR')+' • '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), W/2, 90);
+
+  // Background
+  ctx.fillStyle='#F7F5FA'; ctx.fillRect(0,TOP,W,H-TOP);
+
+  // Rows
+  jogos.forEach((j,i)=>{
+    const t1=resolveTime(j.t1k,resultados)||'A definir';
+    const t2=resolveTime(j.t2k,resultados)||'A definir';
+    const v=palpitesMM[j.id];
+    const temPalpite=v&&v.g1!==''&&v.g2!=='';
+    const pl=temPalpite?v.g1+' × '+v.g2:'__ × __';
+
+    const y=TOP+i*LINHA;
+    const rx=PAD, ry=y+4, rw=W-PAD*2, rh=LINHA-8;
+    ctx.fillStyle=i%2===0?'#fff':'#F0EAF9';
+    ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,10); ctx.fill();
+
+    // Date
+    ctx.fillStyle='#999'; ctx.font='500 11px Inter,Arial'; ctx.textAlign='left';
+    ctx.fillText(j.data, rx+14, ry+14);
+
+    // Teams
+    const cy=ry+rh/2+4;
+    const n1=(t1||'?').replace(/\s\S+$/,'');
+    const n2=(t2||'?').replace(/\s\S+$/,'');
+    ctx.fillStyle=t1==='A definir'?'#bbb':'#1A1A2E';
+    ctx.font='700 17px Inter,Arial'; ctx.textAlign='left';
+    ctx.fillText(n1, rx+14, cy);
+    ctx.fillStyle=t2==='A definir'?'#bbb':'#1A1A2E';
+    ctx.textAlign='right';
+    ctx.fillText(n2, rx+rw-14, cy);
+
+    // Score
+    ctx.textAlign='center';
+    if(temPalpite){
+      ctx.fillStyle='#660099'; ctx.font='800 22px Inter,Arial';
+    } else {
+      ctx.fillStyle='#ccc'; ctx.font='600 18px Inter,Arial';
+    }
+    ctx.fillText(pl, W/2, cy);
+  });
+
+  // Footer
+  ctx.fillStyle='#660099'; ctx.font='500 12px Inter,Arial'; ctx.textAlign='center';
+  ctx.fillText('bolao-copa-pereira.vercel.app', W/2, H-18);
+
+  // Share
+  canvas.toBlob(async blob=>{
+    const file=new File([blob],`ranking-mm-${fase}.png`,{type:'image/png'});
+    if(navigator.share&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Palpites Mata-Mata'});
+    } else {
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url;
+      a.download=`palpites-mm-${fase}.png`; a.click();
+      URL.revokeObjectURL(url);
+    }
+  },'image/png');
+}
+
 function exportarTodosMataM(nome){
   var palMMBase=STATE.palpites[nome+'_mm']||{};
   var esp=STATE.especiais[nome]||{};
@@ -1679,113 +1781,51 @@ function exportarPalpitesDia(dataStr){
   const horaNum=h=>{ const p=(h||'0').split(':'); return parseInt(p[0])*60+(parseInt(p[1])||0); };
   jogosDia.sort((a,b)=>horaNum(a.data.split(' ')[1])-horaNum(b.data.split(' ')[1]));
 
-  // Participantes em ORDEM ALFABÉTICA (nunca reordena/reescreve placar — só a posição da linha)
-  const particsOrd=[...partics].sort((a,b)=>getNome(a).localeCompare(getNome(b),'pt-BR'));
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body{font-family:Arial,sans-serif;font-size:10px;padding:12px;color:#111}
+    h1{font-size:15px;margin:0 0 2px;color:#330066}
+    h2{font-size:12px;margin:12px 0 4px;color:#330066;border-bottom:2px solid #660099;padding-bottom:3px}
+    .sub{font-size:9px;color:#888;margin:0 0 10px}
+    table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:9.5px}
+    th{background:#330066;color:#fff;padding:4px 6px;text-align:left}
+    td{padding:3px 6px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f9f5ff}
+    .pl{font-weight:700;color:#330066;text-align:center;min-width:36px}
+    .vazio{color:#bbb;text-align:center}
+    .top{font-size:9px;color:#660099;font-weight:700;margin:2px 0 8px}
+    @media print{body{padding:4px}}
+  </style></head><body>
+  <h1>⚽ Palpites do Dia — ${dataStr}</h1>
+  <div class="sub">Bolão Copa 2026 · ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>`;
 
-  // Remove bandeiras/emojis dos nomes de seleção pro texto ficar limpo (ex.: "Inglaterra 🏴..." -> "Inglaterra")
-  const limpaNome=s=>String(s||'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{E0000}-\u{E007F}\uFE0F\u200D]/gu,'').replace(/\s+/g,' ').trim();
-
-  // Cabeçalho no padrão do grupo: "01/JULHO"
-  const MESES={jan:'JANEIRO',fev:'FEVEREIRO',mar:'MARÇO',abr:'ABRIL',mai:'MAIO',jun:'JUNHO',jul:'JULHO',ago:'AGOSTO',set:'SETEMBRO',out:'OUTUBRO',nov:'NOVEMBRO',dez:'DEZEMBRO'};
-  const partesData=dataStr.split('/');
-  const cabData=(partesData.length===2)?(partesData[0]+'/'+(MESES[partesData[1].toLowerCase()]||partesData[1].toUpperCase())):dataStr.toUpperCase();
-  const SEP='━━━━━━━━━━━━━━━━━━━━━━━━━';
-  const cabecalho='⚽ PALPITES — '+cabData+' · Bolão Copa 2026';
-
-  // Monta um objeto por jogo com o TEXTO pronto (mesmo dado usado na tela e na cópia)
-  const jogosTxt=jogosDia.map(j=>{
+  jogosDia.forEach(j=>{
     const hora=j.data.split(' ')[1]||'';
     const isMM=!!j.fase;
     const t1raw=isMM?(resolveTime(j.t1k,resultados)||j.t1k):j.t1;
     const t2raw=isMM?(resolveTime(j.t2k,resultados)||j.t2k):j.t2;
-    const titulo=limpaNome(t1raw)+' x '+limpaNome(t2raw)+' ('+hora+')';
+    const faseLabel=isMM?` — ${FASES_LABEL[j.fase]||j.fase}`:'';
+    html+=`<h2>${t1raw} × ${t2raw} (${hora})${faseLabel}</h2>`;
+    html+=`<table><tr><th>Participante</th><th style="text-align:center">Placar</th></tr>`;
 
     const placares={};
-    const linhas=particsOrd.map(p=>{
+    partics.forEach(p=>{
       const nome=getNome(p);
       const palBase=isMM?(STATE.palpites[nome+'_mm']||{}):(STATE.palpites[nome]||{});
       const v=palBase[j.id];
       const pl=(v&&v.g1!==''&&v.g2!=='')?v.g1+'×'+v.g2:null;
       if(pl) placares[pl]=(placares[pl]||0)+1;
-      return {nome, pl};
+      html+=`<tr><td>${nome}</td><td class="${pl?'pl':'vazio'}">${pl||'—'}</td></tr>`;
     });
+
+    html+=`</table>`;
+    // Top 3 placares
     const top=Object.entries(placares).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const stats=top.length?('📊 Mais palpitados: '+top.map(([pl,n])=>pl+' ('+n+'x)').join(' · ')):'';
-
-    // Texto no padrão WhatsApp
-    const corpo=linhas.map(l=>l.nome+': '+(l.pl||'—')).join('\n');
-    const texto=SEP+'\n'+titulo+'\n'+SEP+'\n'+corpo+(stats?('\n\n'+stats):'');
-    return {titulo, linhas, stats, texto};
+    if(top.length) html+=`<div class="top">📊 Mais palpitados: ${top.map(([pl,n])=>pl+' ('+n+'x)').join(' · ')}</div>`;
   });
 
-  const textoTudo=cabecalho+'\n'+jogosTxt.map(g=>g.texto).join('\n\n');
-
-  // ---- HTML da tela (com botões copiar) ----
-  let corpoHtml='';
-  jogosTxt.forEach((g,gi)=>{
-    corpoHtml+=`<div class="game">
-      <div class="ghead">
-        <div class="gtitle">${g.titulo}</div>
-        <button class="cbtn" onclick="copiar(${gi},this)">Copiar</button>
-      </div>
-      <div class="lines">`+
-      g.linhas.map(l=>`<div class="ln"><span class="nm">${l.nome}</span><span class="sc">${l.pl||'—'}</span></div>`).join('')+
-      `</div>`+
-      (g.stats?`<div class="stats">${g.stats}</div>`:'')+
-    `</div>`;
-  });
-
-  const dadosJson=JSON.stringify(jogosTxt.map(g=>g.texto));
-  const tudoJson=JSON.stringify(textoTudo);
-
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <style>
-    *{box-sizing:border-box}
-    body{font-family:-apple-system,Arial,sans-serif;font-size:13px;padding:14px;color:#1a1a1a;background:#faf7ff;max-width:640px;margin:0 auto}
-    h1{font-size:16px;margin:0 0 2px;color:#660099}
-    .sub{font-size:11px;color:#888;margin:0 0 12px}
-    .copyall{display:block;width:100%;margin:0 0 16px;padding:13px;background:#00a651;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
-    .game{background:#fff;border:1px solid #e6dcf5;border-radius:12px;margin-bottom:14px;overflow:hidden}
-    .ghead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:#f3ecfb;border-bottom:1px solid #e6dcf5}
-    .gtitle{font-size:13px;font-weight:700;color:#4B0073}
-    .cbtn{background:#660099;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-    .cbtn.ok{background:#00a651}
-    .lines{padding:4px 0}
-    .ln{display:flex;justify-content:space-between;padding:5px 14px;font-size:13px;border-bottom:1px solid #f4f0fa}
-    .ln:last-child{border-bottom:none}
-    .nm{color:#222}
-    .sc{font-weight:700;color:#660099}
-    .stats{padding:9px 14px 12px;font-size:12px;color:#660099;font-weight:600;border-top:1px solid #eee}
-    @media print{.copyall,.cbtn{display:none}}
-  </style></head><body>
-  <h1>⚽ Palpites do Dia — ${cabData}</h1>
-  <div class="sub">Bolão Copa 2026 · ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
-  <button class="copyall" onclick="copiarTudo(this)">📋 Copiar tudo</button>
-  ${corpoHtml}
-  <script>
-    var JOGOS=${dadosJson};
-    var TUDO=${tudoJson};
-    function copyText(txt){
-      if(navigator.clipboard&&navigator.clipboard.writeText){
-        return navigator.clipboard.writeText(txt).catch(function(){return fallback(txt);});
-      }
-      return fallback(txt);
-    }
-    function fallback(txt){
-      return new Promise(function(res){
-        var ta=document.createElement('textarea');
-        ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.focus(); ta.select();
-        try{document.execCommand('copy');}catch(e){}
-        document.body.removeChild(ta); res();
-      });
-    }
-    function flash(btn,txt){var o=btn.textContent;btn.textContent=txt;btn.classList.add('ok');setTimeout(function(){btn.textContent=o;btn.classList.remove('ok');},1500);}
-    function copiar(i,btn){copyText(JOGOS[i]).then(function(){flash(btn,'✓ Copiado');});}
-    function copiarTudo(btn){copyText(TUDO).then(function(){flash(btn,'✓ Tudo copiado!');});}
-  <\/script>
-  </body></html>`;
-  abrirOverlayImpressao('dia','⚽ Palpites — '+cabData, html);
+  html+=`</body></html>`;
+  abrirOverlayImpressao('dia','⚽ Palpites — '+dataStr, html);
 }
 
 function exportarPalpitesDiaUI(){
@@ -2400,8 +2440,9 @@ function render(){
         }
       });
     });
-    html+=`<div style="display:flex;gap:8px;margin-top:6px">
+    html+=`<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
       <button class="btn2" style="flex:1" onclick="exportarMataM('${esc(partMMAtual)}')">${t("🖨️ Imprimir Mata-Mata","🖨️ Print Knockout")}</button>
+      <button class="btn2" style="flex:1;background:linear-gradient(135deg,#25D366,#128C4E);color:#fff" onclick="exportarFasePNG()">📸 Gerar PNG por Fase</button>
     </div>`;
     html+=`<button class="btn2" onclick="STATE.partMMAtual=null;render()">${t(t('← Voltar','← Back'),'← Back')}</button>`;
   }
